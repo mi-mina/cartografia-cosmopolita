@@ -12,27 +12,19 @@ const originColors = {
 
 // geographic scales
 const worldScaleDymaxion = width / 6 / Math.PI;
-const worldScaleMollweide = width / 1.5 / Math.PI;
 const sevillaScale = width * 170;
 
 // World proyection: Dymaxion
-// const worldProjection = d3
-//   .geoAirocean()
-//   .scale(worldScaleDymaxion)
-//   .translate([width / 2, height / 2]);
-
-// World proyection: Mollweide
 const worldProjection = d3
-  .geoMollweide()
-  .scale(worldScaleMollweide)
-  .translate([width / 2 - width * 0.06, height / 2 + height * 0.08])
-  .rotate([-10, 0, 0]);
+  .geoAirocean()
+  .scale(worldScaleDymaxion)
+  .translate([width / 2, height / 2]);
 
 // Sevilla proyection
 const sevillaProjection = d3
   .geoMercator()
   .scale(sevillaScale)
-  .translate([width / 2 - width * 0.08, height / 2])
+  .translate([width / 2, height / 2])
   .center([-5.95, 37.38]);
 
 // Path generators
@@ -54,17 +46,13 @@ Promise.all([
   d3.json("data/maps/barrios-topo.json"),
   d3.json("data/maps/world-100m-topo.json")
 ]).then(([specimens, origins, barrios, world]) => {
+  console.log("start");
   // console.log("specimens", specimens);
 
   const originsMap = {};
   origins.forEach(origen => {
     const id = Number(origen.UN);
     originsMap[id] = origen["origin"];
-  });
-
-  world.objects.countries.geometries.map(country => {
-    const countryId = Number(country.id);
-    country.origin = originsMap[countryId];
   });
 
   const africaGeometries = world.objects.countries.geometries.filter(
@@ -133,22 +121,21 @@ Promise.all([
   // Draw functions //////////////////////////////
 
   const drawContinentsBorders = originGeometry => {
-    const origin = originGeometry[0].origin;
     graphContainer
       .append("path")
       .datum(topojson.merge(world, originGeometry))
       .attr("d", worldPath)
       .style("fill", "none")
       .style("stroke-width", "0.5px")
-      .style("stroke", originColors[origin]);
+      .style("stroke", "#6b6ecf");
   };
 
-  const drawContinentsShade = (originGeometry, color) => {
+  const drawContinentsShade = originGeometry => {
     graphContainer
       .append("path")
       .datum(topojson.merge(world, originGeometry))
       .attr("d", worldPath)
-      .style("fill", color + shadeTransparency)
+      .style("fill", "#6b6ecf" + shadeTransparency)
       .style("stroke", "none");
   };
 
@@ -193,25 +180,20 @@ Promise.all([
 
   // DRAW ////////////////////////////////////
 
-  // originGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   drawContinentsShade(originGeometry, originColors[origin]);
-  // });
-  // originGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   if (origin !== "asiatico") drawContinentsShade(originGeometry, "#444444");
-  //   else drawContinentsShade(originGeometry, originColors[origin]);
-  // });
-
-  // originGeometries.forEach(originGeometry => {
-  //   drawContinentsBorders(originGeometry);
-  // });
+  originGeometries.forEach(originGeometry => {
+    drawContinentsBorders(originGeometry);
+  });
+  originGeometries.forEach(originGeometry => {
+    drawContinentsShade(originGeometry);
+  });
 
   drawSevillaBarrios();
-  worldSpecimens.forEach(origin => {
-    drawSpecimens(origin);
-  });
-  // drawSpecimens(asiaSpecimens);
+  // worldSpecimens.forEach(origin => {
+  //   drawSpecimens(origin);
+  // });
+  // drawSpecimens(oceaniaSpecimens);
+
+  console.log("end");
 
   d3.select("#downloadImage").on("click", function() {
     saveSvgAsPng(d3.select("#chartSVG").node(), "puntos.png", {
