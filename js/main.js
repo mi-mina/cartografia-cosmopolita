@@ -193,24 +193,24 @@ Promise.all([
 
   // DRAW ////////////////////////////////////
 
-  // originGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   drawContinentsShade(originGeometry, originColors[origin]);
-  // });
+  originGeometries.forEach(originGeometry => {
+    const origin = originGeometry[0].origin;
+    drawContinentsShade(originGeometry, originColors[origin]);
+  });
   // originGeometries.forEach(originGeometry => {
   //   const origin = originGeometry[0].origin;
   //   if (origin !== "asiatico") drawContinentsShade(originGeometry, "#444444");
   //   else drawContinentsShade(originGeometry, originColors[origin]);
   // });
 
-  // originGeometries.forEach(originGeometry => {
-  //   drawContinentsBorders(originGeometry);
-  // });
-
-  drawSevillaBarrios();
-  worldSpecimens.forEach(origin => {
-    drawSpecimens(origin);
+  originGeometries.forEach(originGeometry => {
+    drawContinentsBorders(originGeometry);
   });
+
+  // drawSevillaBarrios();
+  // worldSpecimens.forEach(origin => {
+  //   drawSpecimens(origin);
+  // });
   // drawSpecimens(asiaSpecimens);
 
   d3.select("#downloadImage").on("click", function() {
