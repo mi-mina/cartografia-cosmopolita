@@ -130,6 +130,44 @@ Promise.all([
 
   worldSpecimens.sort((a, b) => b.length - a.length);
 
+  const africaCentroid = {
+    long: 24.3697,
+    lat: -1.9326,
+    origin: "africano",
+    size: africaSpecimens.length
+  };
+  const americaCentroid = {
+    long: -85.5911,
+    lat: 13.9127,
+    origin: "americano",
+    size: americaSpecimens.length
+  };
+  const asiaCentroid = {
+    long: 86.9311,
+    lat: 40.6368,
+    origin: "asiatico",
+    size: asiaSpecimens.length
+  };
+  const europaCentroid = {
+    long: 13.2472,
+    lat: 46.909,
+    origin: "europeo-mediterraneo",
+    size: europaSpecimens.length
+  };
+  const oceaniaCentroid = {
+    long: 134.1076,
+    lat: -24.0026,
+    origin: "oceanico",
+    size: oceaniaSpecimens.length
+  };
+  const centroids = [
+    africaCentroid,
+    americaCentroid,
+    asiaCentroid,
+    europaCentroid,
+    oceaniaCentroid
+  ];
+
   // Draw functions //////////////////////////////
 
   const drawContinentsBorders = originGeometry => {
@@ -165,15 +203,29 @@ Promise.all([
   const drawSpecimens = origin => {
     const originName = origin[0].origin.split("/")[0];
     graphContainer
-      .selectAll("especimen" + originName)
+      .selectAll(".specimen" + originName)
       .data(origin)
       .enter()
       .append("circle")
-      .attr("class", "especimen" + originName)
+      .attr("class", "specimen" + originName)
       .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
       .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
       .attr("r", "0.5px")
       .attr("fill", d => originColors[d.origin] + pointTransparency);
+  };
+
+  const drawTotalsSpecimens = centroids => {
+    graphContainer
+      .selectAll(".totals")
+      .data(centroids)
+      .enter()
+      .append("circle")
+      .attr("class", d => "totals total" + d.origin)
+      .attr("cx", d => worldProjection([+d.long, +d.lat])[0])
+      .attr("cy", d => worldProjection([+d.long, +d.lat])[1])
+      // .attr("r", d => Math.sqrt(d.size / Math.PI) + "px")
+      .attr("r", 0)
+      .attr("fill", d => originColors[d.origin] + shadeTransparency);
   };
 
   // World Testing
@@ -193,25 +245,80 @@ Promise.all([
 
   // DRAW ////////////////////////////////////
 
-  originGeometries.forEach(originGeometry => {
-    const origin = originGeometry[0].origin;
-    drawContinentsShade(originGeometry, originColors[origin]);
-  });
+  // Continent shades
+  // originGeometries.forEach(originGeometry => {
+  //   const origin = originGeometry[0].origin;
+  //   drawContinentsShade(originGeometry, originColors[origin]);
+  // });
   // originGeometries.forEach(originGeometry => {
   //   const origin = originGeometry[0].origin;
   //   if (origin !== "asiatico") drawContinentsShade(originGeometry, "#444444");
   //   else drawContinentsShade(originGeometry, originColors[origin]);
   // });
 
+  // Continent borders
   originGeometries.forEach(originGeometry => {
     drawContinentsBorders(originGeometry);
   });
 
-  // drawSevillaBarrios();
+  // Sevilla
+  drawSevillaBarrios();
+
+  // Specimenn
   // worldSpecimens.forEach(origin => {
   //   drawSpecimens(origin);
   // });
-  // drawSpecimens(asiaSpecimens);
+  // drawSpecimens(europaSpecimens);
+  drawSpecimens(oceaniaSpecimens);
+  // drawSpecimens(americaSpecimens);
+  console.log("asiaSpecimens", asiaSpecimens);
+
+  drawTotalsSpecimens(centroids);
+
+  // setTimeout(movePoints, 4000);
+
+  function movePoints() {
+    graphContainer
+      .selectAll(".specimen" + "oceanico")
+      .transition()
+      .duration(4000)
+      .delay((d, i) => i * 10)
+      .attr(
+        "cx",
+        d => worldProjection([oceaniaCentroid.long, oceaniaCentroid.lat])[0]
+      )
+      .attr(
+        "cy",
+        d => worldProjection([oceaniaCentroid.long, oceaniaCentroid.lat])[1]
+      )
+      .style("fill", "black")
+      .on("end", d => {
+        const actualRadio = d3.selectAll(".totaloceanico").attr("r");
+        const actualArea = Math.PI * Math.pow(actualRadio, 2);
+        const newRadio = Math.sqrt((actualArea + 1) / Math.PI);
+        d3.selectAll(".totaloceanico").attr("r", newRadio);
+      });
+    graphContainer
+      .selectAll(".specimen" + "americano")
+      .transition()
+      .duration(4000)
+      .delay((d, i) => i * 10)
+      .attr(
+        "cx",
+        d => worldProjection([americaCentroid.long, americaCentroid.lat])[0]
+      )
+      .attr(
+        "cy",
+        d => worldProjection([americaCentroid.long, americaCentroid.lat])[1]
+      )
+      .style("fill", "black")
+      .on("end", d => {
+        const actualRadio = d3.selectAll(".totalamericano").attr("r");
+        const actualArea = Math.PI * Math.pow(actualRadio, 2);
+        const newRadio = Math.sqrt((actualArea + 1) / Math.PI);
+        d3.selectAll(".totalamericano").attr("r", newRadio);
+      });
+  }
 
   d3.select("#downloadImage").on("click", function() {
     saveSvgAsPng(d3.select("#chartSVG").node(), "puntos.png", {
