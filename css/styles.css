@@ -12,6 +12,14 @@ body {
   padding-right: 20px;
 }
 
+#canvasContainer {
+  position: absolute;
+}
+
+#svgContainer {
+  position: relative;
+}
+
 #title {
   font-weight: 200;
   font-size: 38px;

@@ -77,13 +77,27 @@ const sevillaPath = d3.geoPath().projection(sevillaProjection);
 // //////////////////////////////////////////////////////////
 
 const svg = d3
-  .select("#chart")
+  .select("#svgContainer")
   .append("svg")
   .attr("id", "chartSVG")
   .attr("width", width)
   .attr("height", height);
 
-const graphContainer = svg.append("g");
+const svgContainer = svg.append("g");
+
+const canvas = d3
+  .select("#canvasContainer")
+  .append("canvas")
+  .attr("width", width)
+  .attr("height", height);
+
+const context = canvas.node().getContext("2d");
+
+// Create an in memory only element of type 'custom'
+const detachedContainer = document.createElement("custom");
+
+// Create a d3 selection for the detached container. It won't be attached to the DOM.
+const customContainer = d3.select(detachedContainer);
 
 // //////////////////////////////////////////////////////////
 // Load data ////////////////////////////////////////////////
@@ -189,7 +203,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // Origin continents ////////////////////////////////////////
   const drawContinentsBorders = originGeometry => {
     const origin = originGeometry[0].origin;
-    graphContainer
+    svgContainer
       .append("path")
       .datum(topojson.merge(world, originGeometry))
       .attr("d", worldPath)
@@ -199,7 +213,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
   };
 
   const drawContinentsShade = (originGeometry, color) => {
-    graphContainer
+    svgConntainer
       .append("path")
       .datum(topojson.merge(world, originGeometry))
       .attr("d", worldPath)
@@ -209,7 +223,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
 
   // Sevilla //////////////////////////////////////////////////
   const drawSevillaBarrios = () => {
-    graphContainer
+    svgConntainer
       .append("path")
       .datum(topojson.feature(barrios, barrios.objects.Barrios))
       .attr("d", sevillaPath)
@@ -221,7 +235,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // Speciments - points //////////////////////////////////////
   const drawSpecimens = origin => {
     const originName = origin[0].origin.split("/")[0];
-    graphContainer
+    svgContainer
       .selectAll(".specimen" + originName)
       .data(origin)
       .enter()
@@ -233,9 +247,54 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .attr("fill", d => originColors[d.origin] + pointTransparency);
   };
 
+  const drawSpecimentsToCustom = specimens => {
+    const dataBinding = customContainer
+      .selectAll(".specimen")
+      .data(specimens, d => d.FID);
+
+    // Update
+
+    // New elements
+    dataBinding
+      .enter()
+      .append("custom")
+      .attr("class", "specimen")
+      .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
+      .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
+      .attr("r", 1)
+      .attr("fillStyle", d => originColors[d.origin] + pointTransparency);
+
+    dataBinding.exit().remove();
+
+    drawCanvas();
+  };
+
+  function drawCanvas() {
+    context.fillStyle = "#000";
+    context.rect(0, 0, canvas.attr("width"), canvas.attr("height"));
+    context.fill();
+
+    var elements = customContainer.selectAll(".specimen");
+    elements.each((d, i, nodes) => {
+      const node = d3.select(nodes[i]);
+
+      context.beginPath();
+      context.fillStyle = node.attr("fillStyle");
+      context.arc(
+        node.attr("cx"),
+        node.attr("cy"),
+        node.attr("r"),
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+      context.closePath();
+    });
+  }
+
   // Total Speciments - Bubles ////////////////////////////////
   const drawTotalsSpecimens = centroids => {
-    graphContainer
+    svgContainer
       .selectAll(".totals")
       .data(centroids)
       .enter()
@@ -243,7 +302,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .attr("class", d => "totals total" + d.origin)
       .attr("cx", d => worldProjection([+d.long, +d.lat])[0])
       .attr("cy", d => worldProjection([+d.long, +d.lat])[1])
-      // .attr("r", d => Math.sqrt(d.size / Math.PI) + "px")
       .attr("r", 0)
       .attr("fill", d => originColors[d.origin] + shadeTransparency);
   };
@@ -251,7 +309,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // World Testing
   // const geometriesWorld = topojson.feature(world, world.objects.countries)
   //   .features;
-  // graphContainer
+  // svgConntainer
   //   .selectAll(".countries")
   //   .data(geometriesWorld)
   //   .enter()
@@ -268,40 +326,78 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // //////////////////////////////////////////////////////////
 
   // Continent shades
-  // originGeometries.forEach(originGeometry => {
+  // allOriginGeometries.forEach(originGeometry => {
   //   const origin = originGeometry[0].origin;
   //   drawContinentsShade(originGeometry, originColors[origin]);
   // });
-  // originGeometries.forEach(originGeometry => {
+  // allOriginGeometries.forEach(originGeometry => {
   //   const origin = originGeometry[0].origin;
   //   if (origin !== "asiatico") drawContinentsShade(originGeometry, "#444444");
   //   else drawContinentsShade(originGeometry, originColors[origin]);
   // });
 
   // Continent borders
-  originGeometries.forEach(originGeometry => {
-    drawContinentsBorders(originGeometry);
-  });
+  // allOriginGeometries.forEach(originGeometry => {
+  //   drawContinentsBorders(originGeometry);
+  // });
 
   // Sevilla
-  drawSevillaBarrios();
+  // drawSevillaBarrios();
 
-  // Specimenn
-  // worldSpecimens.forEach(origin => {
-  //   drawSpecimens(origin);
+  // allWorldSpecimens.forEach(origin => {
+  //   // drawSpecimens(origin);
+  //   drawSpecimentsToCustom(origin);
   // });
-  // drawSpecimens(europaSpecimens);
-  drawSpecimens(oceaniaSpecimens);
-  drawSpecimens(africaSpecimens);
-  // drawSpecimens(europaSpecimens);
-  // console.log("asiaSpecimens", asiaSpecimens);
 
-  drawTotalsSpecimens(centroids);
+  // d3.timer(drawCanvas);
+  drawSpecimentsToCustom(specimensData);
+
+  const dataStay = specimensData.filter(specimen => +specimen.lat > 37.352948);
+  const dataMove = specimensData.filter(specimen => +specimen.lat <= 37.352948);
+  setTimeout(function() {
+    drawSpecimentsToCustom(dataStay);
+
+    svgContainer
+      .selectAll(".specimenMoved")
+      .data(dataMove)
+      .enter()
+      .append("circle")
+      .attr("class", "specimenMoved")
+      .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
+      .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
+      .attr("r", 1)
+      .attr("fill", d => originColors[d.origin] + pointTransparency)
+      .transition()
+      .duration(4000)
+      .delay((d, i) => i * 5)
+      .attr(
+        "cx",
+        d =>
+          worldProjection([
+            originCentroids.oceanico.long,
+            originCentroids.oceanico.lat
+          ])[0]
+      )
+      .attr(
+        "cy",
+        d =>
+          worldProjection([
+            originCentroids.oceanico.long,
+            originCentroids.oceanico.lat
+          ])[1]
+      )
+      .style("fill", "black");
+  }, 4000);
+
+  // drawSpecimens(oceaniaSpecimens);
+  // drawSpecimens(africaSpecimens);
+
+  // drawTotalsSpecimens(centroids);
 
   // setTimeout(movePoints, 4000);
 
   function movePoints() {
-    graphContainer
+    svgConntainer
       .selectAll(".specimen" + "oceanico")
       .transition()
       .duration(4000)
@@ -321,7 +417,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
         const newRadio = Math.sqrt((actualArea + 1) / Math.PI);
         d3.selectAll(".totaloceanico").attr("r", newRadio);
       });
-    graphContainer
+    svgConntainer
       .selectAll(".specimen" + "africano")
       .transition()
       .duration(4000)
