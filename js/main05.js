@@ -42,17 +42,10 @@ const originColors = {
 // //////////////////////////////////////////////////////////
 
 // geographic scales ////////////////////////////////////////
-const worldScaleDymaxion = width / 6 / Math.PI;
 const worldScaleMollweide = width / 1.5 / Math.PI;
 const sevillaScale = width * 170;
 
 // Geographic projections ///////////////////////////////////
-
-// World proyection: Dymaxion
-// const worldProjection = d3
-//   .geoAirocean()
-//   .scale(worldScaleDymaxion)
-//   .translate([width / 2, height / 2]);
 
 // World proyection: Mollweide
 const worldProjection = d3
@@ -168,6 +161,21 @@ function drawMap(error, specimensData, origins, barrios, world) {
     oceaniaGeometries
   ];
 
+  console.log(topojson.mergeArcs(world, africaGeometries));
+  const bboxes = [topojson.bbox(topojson.mergeArcs(world, africaGeometries))];
+
+  svgContainer
+    .selectAll(".africaRect")
+    .data(bboxes)
+    .enter()
+    .append("rect")
+    .attr("class", "africaRect")
+    .attr("x", worldProjection([8, 202])[0])
+    .attr("y", worldProjection([8, 202])[1])
+    .attr("width", worldProjection([554 - 8, 579 - 202])[0])
+    .attr("height", worldProjection([554 - 8, 579 - 202])[1])
+    .style("fill", "red");
+
   // //////////////////////////////////////////////////////////
   // Specimens DATA ////////////////////////////////////
   // //////////////////////////////////////////////////////////
@@ -212,26 +220,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .style("fill", "none")
       .style("stroke-width", "1px")
       .style("stroke", originColors[origin]);
-  };
-
-  const drawContinentsShade = (originGeometry, color) => {
-    svgConntainer
-      .append("path")
-      .datum(topojson.merge(world, originGeometry))
-      .attr("d", worldPath)
-      .style("fill", color + shadeTransparency)
-      .style("stroke", "none");
-  };
-
-  // Sevilla //////////////////////////////////////////////////
-  const drawSevillaBarrios = () => {
-    svgConntainer
-      .append("path")
-      .datum(topojson.feature(barrios, barrios.objects.Barrios))
-      .attr("d", sevillaPath)
-      .style("fill", "none")
-      .style("stroke-width", "1px")
-      .style("stroke", "#444");
   };
 
   // Speciments - points //////////////////////////////////////
@@ -294,20 +282,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
     });
   }
 
-  // Total Speciments - Bubles ////////////////////////////////
-  const drawTotalsSpecimens = centroids => {
-    svgContainer
-      .selectAll(".totals")
-      .data(centroids)
-      .enter()
-      .append("circle")
-      .attr("class", d => "totals total" + d.origin)
-      .attr("cx", d => worldProjection([+d.long, +d.lat])[0])
-      .attr("cy", d => worldProjection([+d.long, +d.lat])[1])
-      .attr("r", 0)
-      .attr("fill", d => originColors[d.origin] + shadeTransparency);
-  };
-
   // World Testing
   // const geometriesWorld = topojson.feature(world, world.objects.countries)
   //   .features;
@@ -327,36 +301,15 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // DRAW /////////////////////////////////////////////////////
   // //////////////////////////////////////////////////////////
 
-  // Continent shades
-  // allOriginGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   drawContinentsShade(originGeometry, originColors[origin]);
-  // });
-  // allOriginGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   if (origin !== "asiatico") drawContinentsShade(originGeometry, "#444444");
-  //   else drawContinentsShade(originGeometry, originColors[origin]);
-  // });
-
   // Continent borders
   allOriginGeometries.forEach(originGeometry => {
     drawContinentsBorders(originGeometry);
   });
 
-  // Sevilla
-  // drawSevillaBarrios();
-
-  // allWorldSpecimens.forEach(origin => {
-  //   // drawSpecimens(origin);
-  //   drawSpecimentsToCustom(origin);
-  // });
-
-  // d3.timer(drawCanvas);
   // drawSpecimentsToCustom(specimensData);
 
   const dataStay = specimensData.filter(specimen => +specimen.lat > 37.352948);
   const dataMove = specimensData.filter(specimen => +specimen.lat <= 37.352948);
-  console.log("dataMove", dataMove);
   // setTimeout(moveFirstBatch, 4000);
 
   function moveFirstBatch() {
@@ -392,56 +345,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
           ])[1]
       )
       .style("fill", "black");
-  }
-
-  // drawSpecimens(oceaniaSpecimens);
-  // drawSpecimens(africaSpecimens);
-
-  // drawTotalsSpecimens(centroids);
-
-  // setTimeout(movePoints, 4000);
-
-  function movePoints() {
-    svgConntainer
-      .selectAll(".specimen" + "oceanico")
-      .transition()
-      .duration(4000)
-      .delay((d, i) => i * 5)
-      .attr(
-        "cx",
-        d => worldProjection([oceaniaCentroid.long, oceaniaCentroid.lat])[0]
-      )
-      .attr(
-        "cy",
-        d => worldProjection([oceaniaCentroid.long, oceaniaCentroid.lat])[1]
-      )
-      .style("fill", "black")
-      .on("end", d => {
-        const actualRadio = d3.selectAll(".totaloceanico").attr("r");
-        const actualArea = Math.PI * Math.pow(actualRadio, 2);
-        const newRadio = Math.sqrt((actualArea + 1) / Math.PI);
-        d3.selectAll(".totaloceanico").attr("r", newRadio);
-      });
-    svgConntainer
-      .selectAll(".specimen" + "africano")
-      .transition()
-      .duration(4000)
-      .delay((d, i) => i * 10)
-      .attr(
-        "cx",
-        d => worldProjection([africaCentroid.long, africaCentroid.lat])[0]
-      )
-      .attr(
-        "cy",
-        d => worldProjection([africaCentroid.long, africaCentroid.lat])[1]
-      )
-      .style("fill", "black")
-      .on("end", d => {
-        const actualRadio = d3.selectAll(".totalafricano").attr("r");
-        const actualArea = Math.PI * Math.pow(actualRadio, 2);
-        const newRadio = Math.sqrt((actualArea + 1) / Math.PI);
-        d3.selectAll(".totalafricano").attr("r", newRadio);
-      });
   }
 
   d3.select("#downloadImage").on("click", function() {
