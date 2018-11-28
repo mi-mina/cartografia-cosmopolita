@@ -161,8 +161,15 @@ function drawMap(error, specimensData, origins, barrios, world) {
     oceaniaGeometries
   ];
 
-  console.log(topojson.mergeArcs(world, africaGeometries));
-  const bboxes = [topojson.bbox(topojson.mergeArcs(world, africaGeometries))];
+  const africaBbox = worldPath.bounds(topojson.merge(world, africaGeometries));
+  const africaGeojson = topojson.merge(world, africaGeometries);
+  const pointX = 46;
+  const pointY = -19;
+
+  console.log(africaBbox);
+  console.log(africaGeojson);
+  console.log(d3.geoContains(africaGeojson, [pointX, pointY]));
+  const bboxes = [topojson.bbox(topojson.mergeArcs(world, americaGeometries))];
 
   svgContainer
     .selectAll(".africaRect")
@@ -170,11 +177,18 @@ function drawMap(error, specimensData, origins, barrios, world) {
     .enter()
     .append("rect")
     .attr("class", "africaRect")
-    .attr("x", worldProjection([8, 202])[0])
-    .attr("y", worldProjection([8, 202])[1])
-    .attr("width", worldProjection([554 - 8, 579 - 202])[0])
-    .attr("height", worldProjection([554 - 8, 579 - 202])[1])
+    .attr("x", 466.5912893019834)
+    .attr("y", 285.71099448017577)
+    .attr("width", 793.7748550947201 - 466.5912893019834)
+    .attr("height", 694.8464259233883 - 285.71099448017577)
     .style("fill", "red");
+
+  svgContainer
+    .append("circle")
+    .attr("cx", worldProjection([pointX, pointY])[0])
+    .attr("cy", worldProjection([pointX, pointY])[1])
+    .attr("r", 5)
+    .style("fill", "white");
 
   // //////////////////////////////////////////////////////////
   // Specimens DATA ////////////////////////////////////
