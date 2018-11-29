@@ -28,7 +28,7 @@ const originCentroids = {
 // Colors ///////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////
 const pointTransparency = "ff"; // "80"; //50%
-const shadeTransparency = "60"; // "80"; //50%
+const shadeTransparency = "40"; // "80"; //50%
 const originColors = {
   americano: "#34ad59",
   africano: "#f4b342",
@@ -161,34 +161,62 @@ function drawMap(error, specimensData, origins, barrios, world) {
     oceaniaGeometries
   ];
 
-  const africaBbox = worldPath.bounds(topojson.merge(world, africaGeometries));
-  const africaGeojson = topojson.merge(world, africaGeometries);
-  const pointX = 46;
-  const pointY = -19;
+  const calculalteDestPoints = originGeoJson => {
+    const bbox = worldPath.bounds(originGeoJson);
+    const x1 = Math.floor(bbox[0][0]);
+    const y1 = Math.floor(bbox[0][1]);
+    const x2 = Math.floor(bbox[1][0]);
+    const y2 = Math.floor(bbox[1][1]);
+    const width = x2 - x1;
+    const height = y2 - y1;
+    const step = 1;
 
-  console.log(africaBbox);
-  console.log(africaGeojson);
-  console.log(d3.geoContains(africaGeojson, [pointX, pointY]));
-  const bboxes = [topojson.bbox(topojson.mergeArcs(world, americaGeometries))];
+    const initialPoints = [];
+
+    for (let x = x1; x < width + x1; x += step) {
+      for (let y = y1; y < height + y1; y += step) {
+        initialPoints.push([x, y]);
+      }
+    }
+    console.log("initialPoints", initialPoints);
+    const destPoints = initialPoints.filter(point => {
+      const x = point[0];
+      const y = point[1];
+      const invert = worldProjection.invert([x, y]);
+      const long = invert[0];
+      const lat = invert[1];
+
+      return d3.geoContains(originGeoJson, [long, lat]);
+    });
+    return destPoints;
+  };
+
+  // const geojson = topojson.merge(world, asiaGeometries);
+  // const geojson = topojson.merge(world, asiaGeometries);
+  // const destPoints = calculalteDestPoints(geojson);
+  // const proyectedPoints = [];
+  // destPoints.forEach(point => {
+  //   proyectedPoints.push(worldProjection.invert(point));
+  // });
+  // console.log("destPoints", destPoints);
+  // console.log("proyectedPoints", proyectedPoints);
+
+  // var myJSON1 = JSON.stringify(destPoints);
+  // var myJSON2 = JSON.stringify(proyectedPoints);
+
+  // console.log(myJSON1);
+  // console.log(myJSON2);
 
   svgContainer
-    .selectAll(".africaRect")
-    .data(bboxes)
+    .selectAll(".destPoints")
+    .data(asiaDestPoints)
     .enter()
-    .append("rect")
-    .attr("class", "africaRect")
-    .attr("x", 466.5912893019834)
-    .attr("y", 285.71099448017577)
-    .attr("width", 793.7748550947201 - 466.5912893019834)
-    .attr("height", 694.8464259233883 - 285.71099448017577)
-    .style("fill", "red");
-
-  svgContainer
     .append("circle")
-    .attr("cx", worldProjection([pointX, pointY])[0])
-    .attr("cy", worldProjection([pointX, pointY])[1])
-    .attr("r", 5)
-    .style("fill", "white");
+    .attr("class", "destPoints")
+    .attr("cx", d => worldProjection(d)[0])
+    .attr("cy", d => worldProjection(d)[1])
+    .attr("r", 2)
+    .style("fill", originColors["asiatico"]);
 
   // //////////////////////////////////////////////////////////
   // Specimens DATA ////////////////////////////////////
@@ -209,6 +237,11 @@ function drawMap(error, specimensData, origins, barrios, world) {
   const oceaniaSpecimens = specimensData.filter(
     specimen => specimen.origin === "oceanico"
   );
+  // console.log("africaSpecimens", africaSpecimens);
+  // console.log("americaSpecimens", americaSpecimens);
+  console.log("asiaSpecimens", asiaSpecimens);
+  // console.log("europaSpecimens", europaSpecimens);
+  // console.log("oceaniaSpecimens", oceaniaSpecimens);
 
   const allWorldSpecimens = [
     africaSpecimens,
@@ -234,6 +267,15 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .style("fill", "none")
       .style("stroke-width", "1px")
       .style("stroke", originColors[origin]);
+  };
+
+  const drawContinentsShade = (originGeometry, color) => {
+    svgContainer
+      .append("path")
+      .datum(topojson.merge(world, originGeometry))
+      .attr("d", worldPath)
+      .style("fill", color + shadeTransparency)
+      .style("stroke", "none");
   };
 
   // Speciments - points //////////////////////////////////////
@@ -319,6 +361,12 @@ function drawMap(error, specimensData, origins, barrios, world) {
   allOriginGeometries.forEach(originGeometry => {
     drawContinentsBorders(originGeometry);
   });
+
+  // allOriginGeometries.forEach(originGeometry => {
+  //   const origin = originGeometry[0].origin;
+  //   console.log("originGeometry", originGeometry);
+  //   drawContinentsShade(originGeometry, originColors[origin]);
+  // });
 
   // drawSpecimentsToCustom(specimensData);
 

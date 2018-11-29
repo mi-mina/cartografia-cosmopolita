@@ -12,12 +12,12 @@ body {
   padding-right: 20px;
 }
 
-#canvasContainer {
-  position: absolute;
-}
-
 #svgContainer {
   position: relative;
+}
+
+#canvasContainer {
+  position: absolute;
 }
 
 #title {

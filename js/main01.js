@@ -234,19 +234,19 @@ function drawMap(error, specimensData, origins, barrios, world) {
   };
 
   // Total Speciments - Bubles ////////////////////////////////
-  const drawTotalsSpecimens = centroids => {
-    graphContainer
-      .selectAll(".totals")
-      .data(centroids)
-      .enter()
-      .append("circle")
-      .attr("class", d => "totals total" + d.origin)
-      .attr("cx", d => worldProjection([+d.long, +d.lat])[0])
-      .attr("cy", d => worldProjection([+d.long, +d.lat])[1])
-      // .attr("r", d => Math.sqrt(d.size / Math.PI) + "px")
-      .attr("r", 0)
-      .attr("fill", d => originColors[d.origin] + shadeTransparency);
-  };
+  // const drawTotalsSpecimens = centroids => {
+  //   graphContainer
+  //     .selectAll(".totals")
+  //     .data(centroids)
+  //     .enter()
+  //     .append("circle")
+  //     .attr("class", d => "totals total" + d.origin)
+  //     .attr("cx", d => worldProjection([+d.long, +d.lat])[0])
+  //     .attr("cy", d => worldProjection([+d.long, +d.lat])[1])
+  //     // .attr("r", d => Math.sqrt(d.size / Math.PI) + "px")
+  //     .attr("r", 0)
+  //     .attr("fill", d => originColors[d.origin] + shadeTransparency);
+  // };
 
   // World Testing
   // const geometriesWorld = topojson.feature(world, world.objects.countries)
@@ -279,12 +279,12 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // });
 
   // Continent borders
-  originGeometries.forEach(originGeometry => {
+  allOriginGeometries.forEach(originGeometry => {
     drawContinentsBorders(originGeometry);
   });
 
   // Sevilla
-  drawSevillaBarrios();
+  // drawSevillaBarrios();
 
   // Specimenn
   // worldSpecimens.forEach(origin => {
@@ -296,7 +296,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // drawSpecimens(europaSpecimens);
   // console.log("asiaSpecimens", asiaSpecimens);
 
-  drawTotalsSpecimens(centroids);
+  // drawTotalsSpecimens(centroids);
 
   // setTimeout(movePoints, 4000);
 
