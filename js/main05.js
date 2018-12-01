@@ -43,9 +43,17 @@ const originColors = {
 
 // geographic scales ////////////////////////////////////////
 const worldScaleMollweide = width / 1.5 / Math.PI;
+const worldScaleCilindrical = width / Math.PI;
 const sevillaScale = width * 170;
 
 // Geographic projections ///////////////////////////////////
+
+// World proyection: geoCylindricalEqualArea
+// const worldProjection = d3
+//   .geoCylindricalEqualArea()
+//   .scale(worldScaleCilindrical)
+//   .translate([width / 2 - width * 0.06, height / 2 + height * 0.08])
+//   .rotate([-10, 0, 0]);
 
 // World proyection: Mollweide
 const worldProjection = d3
@@ -107,6 +115,10 @@ function drawMap(error, specimensData, origins, barrios, world) {
   if (error) throw error;
   console.log("specimensData", specimensData);
   console.log("world", world);
+  specimensData = specimensData.filter((obj, i) => {
+    return i % 4 === 0;
+  });
+  console.log("specimensData", specimensData);
 
   // //////////////////////////////////////////////////////////
   // Geographic DATA //////////////////////////////////////////
@@ -161,38 +173,37 @@ function drawMap(error, specimensData, origins, barrios, world) {
     oceaniaGeometries
   ];
 
-  const calculalteDestPoints = originGeoJson => {
-    const bbox = worldPath.bounds(originGeoJson);
-    const x1 = Math.floor(bbox[0][0]);
-    const y1 = Math.floor(bbox[0][1]);
-    const x2 = Math.floor(bbox[1][0]);
-    const y2 = Math.floor(bbox[1][1]);
-    const width = x2 - x1;
-    const height = y2 - y1;
-    const step = 1;
+  // const calculalteDestPoints = originGeoJson => {
+  //   const bbox = worldPath.bounds(originGeoJson);
+  //   const x1 = Math.floor(bbox[0][0]);
+  //   const y1 = Math.floor(bbox[0][1]);
+  //   const x2 = Math.floor(bbox[1][0]);
+  //   const y2 = Math.floor(bbox[1][1]);
+  //   const width = x2 - x1;
+  //   const height = y2 - y1;
+  //   const step = 1;
 
-    const initialPoints = [];
+  //   const initialPoints = [];
 
-    for (let x = x1; x < width + x1; x += step) {
-      for (let y = y1; y < height + y1; y += step) {
-        initialPoints.push([x, y]);
-      }
-    }
-    console.log("initialPoints", initialPoints);
-    const destPoints = initialPoints.filter(point => {
-      const x = point[0];
-      const y = point[1];
-      const invert = worldProjection.invert([x, y]);
-      const long = invert[0];
-      const lat = invert[1];
+  //   for (let x = x1; x < width + x1; x += step) {
+  //     for (let y = y1; y < height + y1; y += step) {
+  //       initialPoints.push([x, y]);
+  //     }
+  //   }
+  //   console.log("initialPoints", initialPoints);
+  //   const destPoints = initialPoints.filter(point => {
+  //     const x = point[0];
+  //     const y = point[1];
+  //     const invert = worldProjection.invert([x, y]);
+  //     const long = invert[0];
+  //     const lat = invert[1];
 
-      return d3.geoContains(originGeoJson, [long, lat]);
-    });
-    return destPoints;
-  };
+  //     return d3.geoContains(originGeoJson, [long, lat]);
+  //   });
+  //   return destPoints;
+  // };
 
-  // const geojson = topojson.merge(world, asiaGeometries);
-  // const geojson = topojson.merge(world, asiaGeometries);
+  // const geojson = topojson.merge(world, oceaniaGeometries);
   // const destPoints = calculalteDestPoints(geojson);
   // const proyectedPoints = [];
   // destPoints.forEach(point => {
@@ -207,21 +218,58 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // console.log(myJSON1);
   // console.log(myJSON2);
 
-  svgContainer
-    .selectAll(".destPoints")
-    .data(asiaDestPoints)
-    .enter()
-    .append("circle")
-    .attr("class", "destPoints")
-    .attr("cx", d => worldProjection(d)[0])
-    .attr("cy", d => worldProjection(d)[1])
-    .attr("r", 2)
-    .style("fill", originColors["asiatico"]);
+  // console.log("oceaniaDestPoints", oceaniaDestPoints);
+
+  // const destPointsFiltered = americaDestPoints.filter((point, i) => {
+  //   return i % 762 !== 0;
+  // });
+  // var myJSON3 = JSON.stringify(destPointsFiltered);
+  // console.log(myJSON3);
+
+  // console.log("destPointsFiltered", destPointsFiltered);
+  // const fillOpacity = 0.5;
+
+  // svgContainer
+  //   .selectAll(".destPoints")
+  //   .data(americaDestPoints)
+  //   .enter()
+  //   .append("circle")
+  //   .attr("class", d => d)
+  //   .attr("cx", d => worldProjection(d)[0])
+  //   .attr("cy", d => worldProjection(d)[1])
+  //   .attr("r", 1)
+  //   .style("fill", originColors["americano"]);
+  // .style("fill-opacity", fillOpacity);
+
+  // svgContainer
+  //   .selectAll(".destPoints")
+  //   .data(africaDestPoints)
+  //   .enter()
+  //   .append("circle")
+  //   .attr("class", d => d)
+  //   .attr("cx", d => worldProjection(d)[0])
+  //   .attr("cy", d => worldProjection(d)[1])
+  //   .attr("r", 0.5)
+  //   .style("fill", originColors["africano"])
+  //   .style("fill-opacity", fillOpacity);
+
+  // svgContainer
+  //   .selectAll(".destPoints")
+  //   .data(d3.shuffle(oceaniaDestPoints))
+  //   .enter()
+  //   .append("circle")
+  //   .attr("class", d => d)
+  //   .attr("cx", d => worldProjection(d)[0])
+  //   .attr("cy", d => worldProjection(d)[1])
+  //   .attr("r", 0.5)
+  //   .style("fill", originColors["oceanico"]);
+  // .style("fill-opacity", fillOpacity);
 
   // //////////////////////////////////////////////////////////
   // Specimens DATA ////////////////////////////////////
   // //////////////////////////////////////////////////////////
 
+  // Assign ids per origin to match with destPoints arrays
   const africaSpecimens = specimensData.filter(
     specimen => specimen.origin === "africano"
   );
@@ -237,11 +285,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
   const oceaniaSpecimens = specimensData.filter(
     specimen => specimen.origin === "oceanico"
   );
-  // console.log("africaSpecimens", africaSpecimens);
-  // console.log("americaSpecimens", americaSpecimens);
-  console.log("asiaSpecimens", asiaSpecimens);
-  // console.log("europaSpecimens", europaSpecimens);
-  // console.log("oceaniaSpecimens", oceaniaSpecimens);
 
   const allWorldSpecimens = [
     africaSpecimens,
@@ -251,7 +294,42 @@ function drawMap(error, specimensData, origins, barrios, world) {
     oceaniaSpecimens
   ];
 
-  allWorldSpecimens.sort((a, b) => b.length - a.length);
+  allWorldSpecimens.forEach(originSpecimens => {
+    originSpecimens.forEach((obj, i) => {
+      obj.originId = i;
+    });
+  });
+  console.log("africaSpecimens", africaSpecimens);
+  // console.log("americaSpecimens", americaSpecimens);
+  // console.log("asiaSpecimens", asiaSpecimens);
+  // console.log("europaSpecimens", europaSpecimens);
+  console.log("oceaniaSpecimens", oceaniaSpecimens);
+
+  // Shuffle destPoints //////////////////////////////////////
+  africaDestinationPoints = d3.shuffle(africaDestPoints);
+  oceaniaDestinationPoints = d3.shuffle(oceaniaDestPoints);
+  americaDestinationPoints = d3.shuffle(americaDestPoints);
+  europaDestinationPoints = d3.shuffle(europaDestPoints);
+  asiaDestinationPoints = d3.shuffle(asiaDestPoints);
+
+  const destPoints = {
+    americano: americaDestinationPoints,
+    africano: africaDestinationPoints,
+    asiatico: asiaDestinationPoints,
+    oceanico: oceaniaDestinationPoints,
+    "europeo-mediterraneo": europaDestinationPoints
+  };
+
+  // Batches //////////////////////////////////////////////////
+  const batches = [
+    { name: "Bellavista - La Palmera" },
+    { name: "Casco Antiguo" },
+    { name: "Real Alcázar" },
+    { name: "Cerro - Amate" },
+    { name: "Bellavista - La Palmera" },
+    { name: "Bellavista - La Palmera" },
+    { name: "Bellavista - La Palmera" }
+  ];
 
   // //////////////////////////////////////////////////////////
   // Draw Functions ///////////////////////////////////////////
@@ -276,6 +354,17 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .attr("d", worldPath)
       .style("fill", color + shadeTransparency)
       .style("stroke", "none");
+  };
+
+  // Sevilla //////////////////////////////////////////////////
+  const drawSevillaBarrios = () => {
+    svgContainer
+      .append("path")
+      .datum(topojson.feature(barrios, barrios.objects.Barrios))
+      .attr("d", sevillaPath)
+      .style("fill", "none")
+      .style("stroke-width", "3px")
+      .style("stroke", "white");
   };
 
   // Speciments - points //////////////////////////////////////
@@ -358,9 +447,9 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // //////////////////////////////////////////////////////////
 
   // Continent borders
-  allOriginGeometries.forEach(originGeometry => {
-    drawContinentsBorders(originGeometry);
-  });
+  // allOriginGeometries.forEach(originGeometry => {
+  //   drawContinentsBorders(originGeometry);
+  // });
 
   // allOriginGeometries.forEach(originGeometry => {
   //   const origin = originGeometry[0].origin;
@@ -370,8 +459,27 @@ function drawMap(error, specimensData, origins, barrios, world) {
 
   // drawSpecimentsToCustom(specimensData);
 
-  const dataStay = specimensData.filter(specimen => +specimen.lat > 37.352948);
-  const dataMove = specimensData.filter(specimen => +specimen.lat <= 37.352948);
+  // drawSevillaBarrios();
+
+  // Parameters to calculate the batchs based on the distance to the center of Sevilla
+  const extentLong = d3.extent(specimensData, d => d.long);
+  const extentLat = d3.extent(specimensData, d => d.lat);
+  const sevillaCenter = [
+    (Number(extentLong[0]) + Number(extentLong[1])) / 2,
+    (Number(extentLat[0]) + Number(extentLat[1])) / 2
+  ];
+  const longWidth = Math.abs(Number(extentLong[1]) - Number(extentLong[0]));
+  const latHeight = Math.abs(Number(extentLat[1]) - Number(extentLat[0]));
+  const sevillaRadius = d3.max([longWidth, latHeight]);
+
+  console.log("longWidth", longWidth);
+  console.log("latHeight", latHeight);
+  console.log("sevillaRadius", sevillaRadius);
+  console.log("sevillaCenter", sevillaCenter);
+
+  const dataStay = specimensData.filter(specimen => +specimen.lat > 37.38);
+  const dataMove = specimensData.filter(specimen => +specimen.lat <= 37.38);
+  console.log("dataMove", dataMove);
   // setTimeout(moveFirstBatch, 4000);
 
   function moveFirstBatch() {
@@ -389,24 +497,18 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .attr("fill", d => originColors[d.origin] + pointTransparency)
       .transition()
       .duration(4000)
-      .delay((d, i) => i * 5)
-      .attr(
-        "cx",
-        d =>
-          worldProjection([
-            originCentroids.oceanico.long,
-            originCentroids.oceanico.lat
-          ])[0]
-      )
-      .attr(
-        "cy",
-        d =>
-          worldProjection([
-            originCentroids.oceanico.long,
-            originCentroids.oceanico.lat
-          ])[1]
-      )
-      .style("fill", "black");
+      .delay((d, i) => i * 10)
+      .attr("cx", d => {
+        const originDestPoints = destPoints[d.origin];
+        const pointId = d.originId;
+        return worldProjection(originDestPoints[pointId])[0];
+      })
+      .attr("cy", d => {
+        const originDestPoints = destPoints[d.origin];
+        const pointId = d.originId;
+        return worldProjection(originDestPoints[pointId])[1];
+      });
+    // .style("fill", "black");
   }
 
   d3.select("#downloadImage").on("click", function() {
