@@ -1,34 +1,18 @@
 const width = document.body.clientWidth;
 const height = width / 1.7778;
-// const sevillaCenter = [-5.95864006569, 37.37354470255];
 const sevillaCenter = [-5.994, 37.393];
-const sevillaRadius = 0.1;
-const steps = 25;
 
-function calculateEquallySteppedRadius(radius, step) {
-  const radii = [];
-  for (let i = 0; i <= step; i++) {
-    radii.push((radius / step) * i);
-  }
-  return radii.reverse();
-}
-const radii = calculateEquallySteppedRadius(sevillaRadius, steps);
-
-const americaShuffled = d3.shuffle(americaDestPoints);
-const africaShuffled = d3.shuffle(africaDestPoints);
-const asiaShuffled = d3.shuffle(asiaDestPoints);
-const oceaniaShuffled = d3.shuffle(oceaniaDestPoints);
-const europaShuffled = d3.shuffle(europaDestPoints);
 const destPoints = {
-  americano: americaShuffled,
-  africano: africaShuffled,
-  asiatico: asiaShuffled,
-  oceanico: oceaniaShuffled,
-  "europeo-mediterraneo": europaShuffled
+  americano: americaDestPoints,
+  africano: africaDestPoints,
+  asiatico: asiaDestPoints,
+  oceanico: oceaniaDestPoints,
+  "europeo-mediterraneo": europaDestPoints
 };
 
 const destPointsJSON = JSON.stringify(destPoints);
 console.log("destPoints", destPoints);
+console.log("destPointsJSON", destPointsJSON);
 
 // //////////////////////////////////////////////////////////
 // Colors ///////////////////////////////////////////////////
@@ -36,11 +20,66 @@ console.log("destPoints", destPoints);
 const pointTransparency = "ff"; // "80"; //50%
 const shadeTransparency = "40"; // "80"; //50%
 const originColors = {
-  americano: "#34ad59",
-  africano: "#f4b342",
-  asiatico: "#d52dac",
-  oceanico: "#6b6ecf",
-  "europeo-mediterraneo": "#17becf"
+  americano: [
+    "#779754",
+    "#345b0c",
+    "#4f5d3f",
+    "#768367",
+    "#397f3e",
+    "#11502d",
+    "#60a579",
+    "#007c50",
+    "#1e886e",
+    "#0c5d4a"
+  ],
+  africano: [
+    "#e28235",
+    "#c98d1e",
+    "#f5a544",
+    "#b97702",
+    "#be8200",
+    "#cf6913",
+    "#ff8c31",
+    "#ef9c00",
+    "#ee8f00",
+    "#f5ae0f"
+  ],
+  asiatico: [
+    "#de71c1",
+    "#c4414c",
+    "#ff6c91",
+    "#a5196d",
+    "#b0004a",
+    "#ff5866",
+    "#ff67c6",
+    "#a00f90",
+    "#d2006d",
+    "#fb379b"
+  ],
+  oceanico: [
+    "#67647d",
+    "#947499",
+    "#444169",
+    "#a88cbf",
+    "#8592cd",
+    "#5466a1",
+    "#9a68a3",
+    "#4a3b7b",
+    "#728ad9",
+    "#b084d2"
+  ],
+  "europeo-mediterraneo": [
+    "#007c97",
+    "#47a0c9",
+    "#2f4c5e",
+    "#7c96ab",
+    "#0093d6",
+    "#6b9bc6",
+    "#0077be",
+    "#3e577b",
+    "#728db9",
+    "#6693d2"
+  ]
 };
 
 // //////////////////////////////////////////////////////////
@@ -92,6 +131,18 @@ const svg = d3
 
 const svgContainer = svg.append("g");
 
+svgContainer
+  .append("text")
+  .attr("id", "title")
+  .attr("x", width / 2)
+  .attr("y", height - 50)
+  .attr("text-anchor", "middle")
+  .style("font-family", "Lobster")
+  .style("font-size", "30px")
+  .style("font-style", "italic")
+  .style("fill", "#6f6f6f")
+  .text("Sevilla");
+
 // White circle
 // svgContainer
 //   .append("circle")
@@ -132,7 +183,11 @@ function drawMap(error, specimensData, origins, barrios, world) {
   console.log("specimensData", specimensData);
   // console.log("world", world);
   // console.log("destPoints", destPoints);
-  specimensData.forEach(obj => (obj.positioned = "sevilla"));
+  specimensData.forEach(obj => {
+    const id = getRandomInt(0, 9);
+    obj.color = originColors[obj.origin][id];
+    obj.positioned = "sevilla";
+  });
   // specimensData = specimensData.filter((obj, i) => {
   //   return i % 5 === 0;
   // });
@@ -183,13 +238,13 @@ function drawMap(error, specimensData, origins, barrios, world) {
     }
   );
 
-  const allOriginGeometries = [
-    africaGeometries,
-    americaGeometries,
-    asiaGeometries,
-    europaGeometries,
-    oceaniaGeometries
-  ];
+  // const allOriginGeometries = [
+  //   africaGeometries,
+  //   americaGeometries,
+  //   asiaGeometries,
+  //   europaGeometries,
+  //   oceaniaGeometries
+  // ];
 
   // //////////////////////////////////////////////////////////
   // Specimens DATA ///////////////////////////////////////////
@@ -231,6 +286,55 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // console.log("europaSpecimens", europaSpecimens);
   // console.log("oceaniaSpecimens", oceaniaSpecimens);
 
+  // Specimens by district and zone
+
+  const distritosNames = getUniqueCategory(specimensData, "DISTRITO");
+  console.log("distritosNames", distritosNames);
+
+  const batchesNames = [
+    "Casco Antiguo",
+    "Real Alcázar",
+    "Nervión",
+    "San Pablo - Santa Justa",
+    "Macarena",
+    "Cerro - Amate",
+    "María Luisa",
+    "Sur",
+    "Triana",
+    "Los Remedios",
+    "Bellavista - La Palmera",
+    "Este - Alcosa - Torreblanca",
+    "Norte"
+  ];
+
+  const distritos = {};
+  batchesNames.forEach(distritoName => {
+    if (distritosNames.indexOf(distritoName) !== -1) {
+      distritos[distritoName] = filterByCategory(
+        specimensData,
+        "DISTRITO",
+        distritoName
+      );
+    }
+  });
+  console.log("distritos", distritos);
+
+  distritos["María Luisa"] = distritos.Sur.filter(
+    obj => obj["park_zona"] === "María Luisa"
+  );
+  distritos.Sur = distritos.Sur.filter(
+    obj => obj["park_zona"] !== "María Luisa"
+  );
+
+  distritos["Real Alcázar"] = distritos["Casco Antiguo"].filter(
+    obj => obj["park_zona"] === "Real Alcázar"
+  );
+  distritos["Casco Antiguo"] = distritos["Casco Antiguo"].filter(
+    obj => obj["park_zona"] !== "Real Alcázar"
+  );
+
+  console.log("distritos", distritos);
+
   // //////////////////////////////////////////////////////////
   // Draw Functions ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
@@ -244,46 +348,10 @@ function drawMap(error, specimensData, origins, barrios, world) {
       .attr("d", worldPath)
       .style("fill", "none")
       .style("stroke-width", "1px")
-      .style("stroke", originColors[origin]);
-  };
-
-  const drawContinentsShade = (originGeometry, color) => {
-    svgContainer
-      .append("path")
-      .datum(topojson.merge(world, originGeometry))
-      .attr("d", worldPath)
-      .style("fill", color + shadeTransparency)
-      .style("stroke", "none");
-  };
-
-  // Sevilla //////////////////////////////////////////////////
-  const drawSevillaBarrios = () => {
-    svgContainer
-      .append("path")
-      .datum(topojson.feature(barrios, barrios.objects.Barrios))
-      .attr("d", sevillaPath)
-      .style("fill", "none")
-      .style("stroke-width", "3px")
-      .style("stroke", "white");
-  };
-
-  // Speciments - points //////////////////////////////////////
-  const drawSpecimens = origin => {
-    const originName = origin[0].origin.split("/")[0];
-    svgContainer
-      .selectAll(".specimen" + originName)
-      .data(origin)
-      .enter()
-      .append("circle")
-      .attr("class", "specimen" + originName)
-      .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
-      .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
-      .attr("r", "1px")
-      .attr("fill", d => originColors[d.origin] + pointTransparency);
+      .style("stroke", d => d.color);
   };
 
   const drawSpecimentsToCustom = specimens => {
-    console.log("calling drawSpecimentsToCustom");
     const dataBinding = customContainer
       .selectAll(".specimen")
       .data(specimens, d => d.FID);
@@ -307,8 +375,15 @@ function drawMap(error, specimensData, origins, barrios, world) {
         else if (d.positioned === "world")
           return worldProjection([+d.long, +d.lat])[1];
       })
-      .attr("r", 1)
-      .attr("fillStyle", d => originColors[d.origin] + pointTransparency);
+      .attr("r", d => {
+        if (d.positioned === "sevilla") return 0.5;
+        else if (d.positioned === "world") return 0.75;
+      })
+      .attr("fillStyle", d => {
+        if (d.positioned === "sevilla") return "#d8d8d8";
+        //d.color + "ff";
+        else if (d.positioned === "world") return d.color; // + "CC"; //"80";
+      });
 
     dataBinding.exit().remove();
 
@@ -347,86 +422,93 @@ function drawMap(error, specimensData, origins, barrios, world) {
   //   drawContinentsBorders(originGeometry);
   // });
 
-  // Continent shades
-  // allOriginGeometries.forEach(originGeometry => {
-  //   const origin = originGeometry[0].origin;
-  //   drawContinentsShade(originGeometry, originColors[origin]);
-  // });
-
   drawSpecimentsToCustom(specimensData);
 
-  // drawSevillaBarrios();
-
-  // Calculate distances to center so that the respective annulus are equal area
-
-  // const radii = calcSteppedDistCenter(sevillaRadius, steps);
-
-  // var radiiJSON = JSON.stringify(radii);
-  // console.log("radiiJSON", radiiJSON);
-
   let counter = 0;
-  setTimeout(moveBatch, 8000);
+  setTimeout(moveBatch, 4000);
 
   function moveBatch() {
     console.log("counter", counter);
 
-    if (counter <= steps) {
-      const dataStay = specimensData.filter(specimen => {
-        const originPoint = [+specimen.long, +specimen.lat];
-        return (
-          calcDistTwoPoints(originPoint, sevillaCenter) > radii[counter] ||
-          calcDistTwoPoints(originPoint, sevillaCenter) < radii[counter + 1]
-        );
+    if (counter < batchesNames.length) {
+      let dataStay = [];
+      const distritosStay = batchesNames.filter((name, i) => {
+        return i !== counter;
       });
-
-      const dataMove = specimensData.filter(specimen => {
-        const originPoint = [+specimen.long, +specimen.lat];
-        return (
-          calcDistTwoPoints(originPoint, sevillaCenter) <= radii[counter] &&
-          calcDistTwoPoints(originPoint, sevillaCenter) >= radii[counter + 1]
-        );
+      distritosStay.forEach(name => {
+        dataStay = dataStay.concat(distritos[name]);
       });
-      console.log("dataMove", dataMove);
+      // console.log("dataStay", dataStay);
 
-      drawSpecimentsToCustom(dataStay);
-      counter++;
+      const dataMove = distritos[batchesNames[counter]];
+      // console.log("dataMove", dataMove);
+
+      const title = batchesNames[counter];
+      // console.log("title", title);
+
       svgContainer
-        .selectAll(".specimenMoved")
-        .data(dataMove)
-        .enter()
-        .append("circle")
-        .attr("class", "specimenMoved")
-        .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
-        .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
-        .attr("r", 1)
-        .attr("fill", d => originColors[d.origin] + pointTransparency)
+        .select("#title")
         .transition()
-        .ease(d3.easeLinear)
-        .duration(4000)
-        .delay((d, i) => i * 1)
-        .attr("cx", d => {
-          const originDestPoints = destPoints[d.origin];
-          const pointId = d.originId;
-          return worldProjection(originDestPoints[pointId])[0];
-        })
-        .attr("cy", d => {
-          const originDestPoints = destPoints[d.origin];
-          const pointId = d.originId;
-          return worldProjection(originDestPoints[pointId])[1];
-        })
-        .style("fill-opacity", 1)
-        .call(endall, () => {
-          dataMove.forEach(specimen => {
-            const originDestPoints = destPoints[specimen.origin];
-            const pointId = specimen.originId;
-            specimen.long = originDestPoints[pointId][0];
-            specimen.lat = originDestPoints[pointId][1];
-            specimen.positioned = "world";
-          });
-          svgContainer.selectAll(".specimenMoved").remove();
-          drawSpecimentsToCustom(dataStay.concat(dataMove));
-          moveBatch();
+        .duration(500)
+        .style("fill", "black")
+        .on("end", () => {
+          svgContainer.select("#title").text(title);
+
+          svgContainer
+            .select("#title")
+            .transition()
+            .duration(500)
+            .style("fill", "#6f6f6f");
+
+          drawSpecimentsToCustom(dataStay);
+
+          svgContainer
+            .selectAll(".specimenMoved")
+            .data(dataMove)
+            .enter()
+            .append("circle")
+            .attr("class", "specimenMoved")
+            .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
+            .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
+            .attr("r", 0.5)
+            .attr("fill", "#d8d8d8")
+            .transition()
+            .duration(1500)
+            .attr("fill", d => d.color)
+            .attr("r", 0.75)
+            .transition()
+            .ease(d3.easeLinear)
+            .duration(2000)
+            .delay((d, i) => i * 5)
+            .attr("cx", d => {
+              const originDestPoints = destPoints[d.origin];
+              const pointId = d.originId;
+              return worldProjection(originDestPoints[pointId])[0];
+            })
+            .attr("cy", d => {
+              const originDestPoints = destPoints[d.origin];
+              const pointId = d.originId;
+              return worldProjection(originDestPoints[pointId])[1];
+            })
+            .attr("r", 2)
+            .transition()
+            .duration(1500)
+            .attr("r", 0.75)
+            .call(endall, () => {
+              dataMove.forEach(specimen => {
+                const originDestPoints = destPoints[specimen.origin];
+                const pointId = specimen.originId;
+                specimen.long = originDestPoints[pointId][0];
+                specimen.lat = originDestPoints[pointId][1];
+                specimen.positioned = "world";
+              });
+              svgContainer.selectAll(".specimenMoved").remove();
+              drawSpecimentsToCustom(dataStay.concat(dataMove));
+              moveBatch();
+            });
         });
+
+      counter++;
     }
   }
 
@@ -454,6 +536,7 @@ function endall(transition, callback) {
   if (typeof callback !== "function")
     throw new Error("Wrong callback in endall");
   if (transition.size() === 0) {
+    console.log("transition.size()", transition.size());
     callback();
   }
   var n = 0;
@@ -464,4 +547,24 @@ function endall(transition, callback) {
     .on("end", function() {
       if (!--n) callback.apply(this, arguments);
     });
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function filterByCategory(data, category, name) {
+  return data.filter(obj => {
+    return obj[category] === name;
+  });
+}
+
+function getUniqueCategory(data, category) {
+  return [...new Set(data.map(obj => obj[category]))];
+}
+
+function removeElementFromArray(array, index) {
+  if (array[index]) {
+    array.splice(index, 1);
+  }
 }

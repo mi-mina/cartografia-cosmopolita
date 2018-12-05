@@ -1,6 +1,6 @@
 const width = document.body.clientWidth;
 const height = width / 1.7778;
-// const sevillaCenter = [-5.95864006569, 37.37354470255];
+// const sevillaGeomCenter = [-5.95864006569, 37.37354470255];
 const sevillaCenter = [-5.994, 37.393];
 const sevillaRadius = 0.1;
 const steps = 25;
@@ -308,7 +308,10 @@ function drawMap(error, specimensData, origins, barrios, world) {
           return worldProjection([+d.long, +d.lat])[1];
       })
       .attr("r", 1)
-      .attr("fillStyle", d => originColors[d.origin] + pointTransparency);
+      .attr("fillStyle", d => {
+        if (d.positioned === "sevilla") return originColors[d.origin] + "ff";
+        else if (d.positioned === "world") return originColors[d.origin] + "80";
+      });
 
     dataBinding.exit().remove();
 
@@ -403,7 +406,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
         .transition()
         .ease(d3.easeLinear)
         .duration(4000)
-        .delay((d, i) => i * 1)
+        .delay((d, i) => i * 10)
         .attr("cx", d => {
           const originDestPoints = destPoints[d.origin];
           const pointId = d.originId;
@@ -414,7 +417,7 @@ function drawMap(error, specimensData, origins, barrios, world) {
           const pointId = d.originId;
           return worldProjection(originDestPoints[pointId])[1];
         })
-        .style("fill-opacity", 1)
+        .style("fill-opacity", 0.5)
         .call(endall, () => {
           dataMove.forEach(specimen => {
             const originDestPoints = destPoints[specimen.origin];

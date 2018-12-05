@@ -10,7 +10,7 @@ const calculalteDestPoints = originGeoJson => {
   const y2 = Math.floor(bbox[1][1]);
   const width = x2 - x1;
   const height = y2 - y1;
-  const step = 1;
+  const step = 2;
 
   const initialPoints = [];
 
@@ -32,7 +32,7 @@ const calculalteDestPoints = originGeoJson => {
   return destPoints;
 };
 
-const geojson = topojson.merge(world, oceaniaGeometries);
+const geojson = topojson.merge(world, africaGeometries);
 const destPoints = calculalteDestPoints(geojson);
 const proyectedPoints = [];
 destPoints.forEach(point => {
@@ -41,33 +41,30 @@ destPoints.forEach(point => {
 console.log("destPoints", destPoints);
 console.log("proyectedPoints", proyectedPoints);
 
-var myJSON1 = JSON.stringify(destPoints);
-var myJSON2 = JSON.stringify(proyectedPoints);
-
+var myJSON1 = JSON.stringify(proyectedPoints);
 console.log(myJSON1);
+
+const fillOpacity = 1;
+
+const data = d3.shuffle(proyectedPoints).slice(0, 2228);
+var myJSON2 = JSON.stringify(data);
 console.log(myJSON2);
 
-console.log("oceaniaDestPoints", oceaniaDestPoints);
-
-const destPointsFiltered = americaDestPoints.filter((point, i) => {
-  return i % 762 !== 0;
-});
-var myJSON3 = JSON.stringify(destPointsFiltered);
-console.log(myJSON3);
-
-console.log("destPointsFiltered", destPointsFiltered);
-const fillOpacity = 0.5;
+console.log("data", data);
 
 svgContainer
   .selectAll(".destPoints")
-  .data(americaDestPoints)
+  .data(data)
   .enter()
   .append("circle")
   .attr("class", d => d)
   .attr("cx", d => worldProjection(d)[0])
   .attr("cy", d => worldProjection(d)[1])
   .attr("r", 1)
-  .style("fill", originColors["americano"])
+  .style("fill", () => {
+    const id = getRandomInt(0, 9);
+    return originColors["africano"][id];
+  })
   .style("fill-opacity", fillOpacity);
 
 // //////////////////////////////////////////////////////////
@@ -156,3 +153,26 @@ const originalRadii = [
   0.01725842520347655,
   0
 ];
+
+// He colors transparency
+// 100% — FF
+// 95% — F2
+// 90% — E6
+// 85% — D9
+// 80% — CC
+// 75% — BF
+// 70% — B3
+// 65% — A6
+// 60% — 99
+// 55% — 8C
+// 50% — 80
+// 45% — 73
+// 40% — 66
+// 35% — 59
+// 30% — 4D
+// 25% — 40
+// 20% — 33
+// 15% — 26
+// 10% — 1A
+// 5% — 0D
+// 0% — 00
