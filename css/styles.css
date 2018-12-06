@@ -20,22 +20,22 @@ body {
   position: absolute;
 }
 
-#title {
-  font-weight: 200;
+#districtName {
+  /* font-weight: 200;
   font-size: 38px;
   margin-top: 45px;
-  margin-bottom: 0px;
+  margin-bottom: 0px; */
   color: beige;
 }
 
-#subtitle {
-  font-weight: 300;
-  font-size: 17px;
-  margin-top: 5px;
-  margin-bottom: 55px;
+#totalSpecimensText {
+  /* font-weight: 300;
+  font-size: 17px; */
+  /* margin-top: 5px;
+  margin-bottom: 55px; */
   color: #7a8d2d;
 }
 
 #chart {
-  /* border: 1px solid beige; */
+  border: 1px solid beige;
 }

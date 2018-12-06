@@ -1,3 +1,18 @@
+const arrayEmpty = new Array(100);
+const array = Array.from(arrayEmpty, d => 1);
+console.log("array", array);
+array.forEach(d => {
+  // const rand = d3.randomUniform(0, 9);
+  const rand = d3.randomBates(3);
+  // console.log("rand", Math.floor(rand()));
+  // console.log("rand",x rand());
+});
+
+const elem = document.body; // Make the body go full screen.
+d3.select("body").on("click", () => {
+  requestFullScreen(elem);
+});
+
 const width = document.body.clientWidth;
 const height = width / 1.7778;
 const sevillaCenter = [-5.994, 37.393];
@@ -11,14 +26,17 @@ const destPoints = {
 };
 
 const destPointsJSON = JSON.stringify(destPoints);
-console.log("destPoints", destPoints);
-console.log("destPointsJSON", destPointsJSON);
+// console.log("destPoints", destPoints);
+// console.log("destPointsJSON", destPointsJSON);
 
 // //////////////////////////////////////////////////////////
 // Colors ///////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////
-const pointTransparency = "ff"; // "80"; //50%
-const shadeTransparency = "40"; // "80"; //50%
+// const pointTransparency = "ff"; // "80"; //50%
+// const shadeTransparency = "40"; // "80"; //50%
+const title1Color = "#bfbfb1";
+const title2Color = "#7a8d2d";
+const sevillaPointsColor = "#bfbfb1";
 const originColors = {
   americano: [
     "#779754",
@@ -131,17 +149,31 @@ const svg = d3
 
 const svgContainer = svg.append("g");
 
+// District Name
 svgContainer
   .append("text")
-  .attr("id", "title")
+  .attr("id", "title1")
   .attr("x", width / 2)
   .attr("y", height - 50)
   .attr("text-anchor", "middle")
   .style("font-family", "Lobster")
   .style("font-size", "30px")
   .style("font-style", "italic")
-  .style("fill", "#6f6f6f")
-  .text("Sevilla");
+  .style("fill", title1Color)
+  .text("");
+
+// Total specimens
+svgContainer
+  .append("text")
+  .attr("id", "title2")
+  .attr("x", width / 2)
+  .attr("y", height - 30)
+  .attr("text-anchor", "middle")
+  .style("font-family", "Lobster")
+  .style("font-size", "15px")
+  .style("font-style", "italic")
+  .style("fill", title2Color)
+  .text("");
 
 // White circle
 // svgContainer
@@ -171,6 +203,10 @@ const customContainer = d3.select(detachedContainer);
 
 d3.queue()
   .defer(d3.csv, "/data/garden/ReducESPE42k.csv")
+  .defer(d3.csv, "/data/garden/totals.csv", d => {
+    d["numero_plantas"] = +d["numero_plantas"];
+    return d;
+  })
   // .defer(d3.csv, "/data/garden/gardenAtlas-morfologia.csv")
   .defer(d3.csv, "/data/garden/paises_ISO3_origin.csv")
   .defer(d3.json, "/data/maps/barrios-topo.json")
@@ -178,20 +214,12 @@ d3.queue()
   // .defer(d3.json, "/js/data/destPoints.json")
   .await(drawMap);
 
-function drawMap(error, specimensData, origins, barrios, world) {
+function drawMap(error, specimensData, totals, origins, barrios, world) {
   if (error) throw error;
-  console.log("specimensData", specimensData);
+  // console.log("specimensData", specimensData);
+  console.log("totals", totals);
   // console.log("world", world);
   // console.log("destPoints", destPoints);
-  specimensData.forEach(obj => {
-    const id = getRandomInt(0, 9);
-    obj.color = originColors[obj.origin][id];
-    obj.positioned = "sevilla";
-  });
-  // specimensData = specimensData.filter((obj, i) => {
-  //   return i % 5 === 0;
-  // });
-  // console.log("specimensData", specimensData);
 
   // //////////////////////////////////////////////////////////
   // Geographic DATA //////////////////////////////////////////
@@ -209,46 +237,62 @@ function drawMap(error, specimensData, origins, barrios, world) {
     country.origin = originsMap[countryId];
   });
 
-  const africaGeometries = world.objects.countries.geometries.filter(
-    country => {
-      const countryId = Number(country.id);
-      return originsMap[countryId] === "africano";
-    }
-  );
-  const americaGeometries = world.objects.countries.geometries.filter(
-    country => {
-      const countryId = Number(country.id);
-      return originsMap[countryId] === "americano";
-    }
-  );
-  const asiaGeometries = world.objects.countries.geometries.filter(country => {
+  // Add id number by origin to match with dest points
+  world.objects.countries.geometries.filter(country => {
+    const countryId = Number(country.id);
+    return originsMap[countryId] === "africano";
+  });
+  world.objects.countries.geometries.filter(country => {
+    const countryId = Number(country.id);
+    return originsMap[countryId] === "americano";
+  });
+  world.objects.countries.geometries.filter(country => {
     const countryId = Number(country.id);
     return originsMap[countryId] === "asiatico";
   });
-  const europaGeometries = world.objects.countries.geometries.filter(
-    country => {
-      const countryId = Number(country.id);
-      return originsMap[countryId] === "europeo-mediterraneo";
-    }
-  );
-  const oceaniaGeometries = world.objects.countries.geometries.filter(
-    country => {
-      const countryId = Number(country.id);
-      return originsMap[countryId] === "oceanico";
-    }
-  );
-
-  // const allOriginGeometries = [
-  //   africaGeometries,
-  //   americaGeometries,
-  //   asiaGeometries,
-  //   europaGeometries,
-  //   oceaniaGeometries
-  // ];
+  world.objects.countries.geometries.filter(country => {
+    const countryId = Number(country.id);
+    return originsMap[countryId] === "europeo-mediterraneo";
+  });
+  world.objects.countries.geometries.filter(country => {
+    const countryId = Number(country.id);
+    return originsMap[countryId] === "oceanico";
+  });
 
   // //////////////////////////////////////////////////////////
   // Specimens DATA ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
+
+  // Assign a random color, positioned in Sevilla
+  specimensData.forEach(obj => {
+    const id = getRandomInt(0, 9);
+    obj.color = originColors[obj.origin][id];
+    obj.positioned = "sevilla";
+  });
+
+  const total = totals
+    .map(obj => obj.numero_plantas)
+    .reduce((a, b) => Number(a) + Number(b));
+
+  const districtTotals = {};
+  d3.nest()
+    .key(d => d.distrito)
+    .entries(totals)
+    .forEach(dist => {
+      districtTotals[dist.key] = dist.values
+        .map(d => d["numero_plantas"])
+        .reduce((a, b) => a + b);
+    });
+
+  const originTotals = {};
+  d3.nest()
+    .key(d => d.origen)
+    .entries(totals)
+    .forEach(dist => {
+      originTotals[dist.key] = dist.values
+        .map(d => d["numero_plantas"])
+        .reduce((a, b) => a + b);
+    });
 
   // Assign ids per origin to match with destPoints arrays
   const africaSpecimens = specimensData.filter(
@@ -289,7 +333,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // Specimens by district and zone
 
   const distritosNames = getUniqueCategory(specimensData, "DISTRITO");
-  console.log("distritosNames", distritosNames);
 
   const batchesNames = [
     "Casco Antiguo",
@@ -317,7 +360,6 @@ function drawMap(error, specimensData, origins, barrios, world) {
       );
     }
   });
-  console.log("distritos", distritos);
 
   distritos["María Luisa"] = distritos.Sur.filter(
     obj => obj["park_zona"] === "María Luisa"
@@ -333,30 +375,52 @@ function drawMap(error, specimensData, origins, barrios, world) {
     obj => obj["park_zona"] !== "Real Alcázar"
   );
 
+  console.log("batchesNames", batchesNames);
   console.log("distritos", distritos);
 
   // //////////////////////////////////////////////////////////
   // Draw Functions ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
 
-  // Origin continents ////////////////////////////////////////
-  const drawContinentsBorders = originGeometry => {
-    const origin = originGeometry[0].origin;
+  function drawRectFade(
+    direction,
+    callback = () => {
+      console.log("callback");
+    }
+  ) {
     svgContainer
-      .append("path")
-      .datum(topojson.merge(world, originGeometry))
-      .attr("d", worldPath)
-      .style("fill", "none")
-      .style("stroke-width", "1px")
-      .style("stroke", d => d.color);
-  };
+      .append("rect")
+      .attr("class", "blackRect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "#00000")
+      .attr("fill-opacity", () => {
+        if (direction === "in") return 1;
+        else if (direction === "out") return 0;
+      })
+      .transition()
+      .duration(1000)
+      .attr("fill-opacity", () => {
+        if (direction === "in") return 0;
+        else if (direction === "out") return 1;
+      })
+      .on("end", () => {
+        svgContainer.select(".blackRect").remove();
+        callback();
+      });
+  }
 
-  const drawSpecimentsToCustom = specimens => {
+  const drawSpecimentsToCanvas = (specimens, sevillaIsColoured) => {
     const dataBinding = customContainer
       .selectAll(".specimen")
       .data(specimens, d => d.FID);
 
     // Update
+    dataBinding.attr("fillStyle", d => {
+      if (d.positioned === "sevilla" && !sevillaIsColoured)
+        return sevillaPointsColor;
+      else return d.color;
+    });
 
     // New elements
     dataBinding
@@ -380,9 +444,9 @@ function drawMap(error, specimensData, origins, barrios, world) {
         else if (d.positioned === "world") return 0.75;
       })
       .attr("fillStyle", d => {
-        if (d.positioned === "sevilla") return "#d8d8d8";
-        //d.color + "ff";
-        else if (d.positioned === "world") return d.color; // + "CC"; //"80";
+        if (d.positioned === "sevilla" && !sevillaIsColoured)
+          return sevillaPointsColor;
+        else return d.color;
       });
 
     dataBinding.exit().remove();
@@ -416,16 +480,70 @@ function drawMap(error, specimensData, origins, barrios, world) {
   // //////////////////////////////////////////////////////////
   // DRAW /////////////////////////////////////////////////////
   // //////////////////////////////////////////////////////////
-
-  // Continent borders
-  // allOriginGeometries.forEach(originGeometry => {
-  //   drawContinentsBorders(originGeometry);
-  // });
-
-  drawSpecimentsToCustom(specimensData);
-
   let counter = 0;
-  setTimeout(moveBatch, 4000);
+
+  // Draw Sevilla all points in their color
+
+  drawSpecimentsToCanvas(specimensData, true);
+  drawRectFade("in");
+  d3.select("#title1").text("Sevilla");
+  d3.select("#title2").text(`${total} especímenes`);
+
+  setTimeout(() => {
+    drawRectFade("out", drawAsiaSpecimens);
+  }, 4000);
+
+  function drawAsiaSpecimens() {
+    drawSpecimentsToCanvas(asiaSpecimens, true);
+    drawRectFade("in");
+    d3.select("#title1").text("Sevilla asiática");
+    d3.select("#title2").text(`${originTotals["asiatico"]} especímenes`);
+    setTimeout(() => {
+      drawRectFade("out", drawEuropaSpecimens);
+    }, 4000);
+  }
+
+  function drawEuropaSpecimens() {
+    drawSpecimentsToCanvas(europaSpecimens, true);
+    drawRectFade("in");
+    d3.select("#title1").text("Sevilla europeo-mediterránea");
+    d3.select("#title2").text(
+      `${originTotals["europeo-mediterraneo"]} especímenes`
+    );
+    setTimeout(() => {
+      drawRectFade("out", drawAmericaSpecimens);
+    }, 4000);
+  }
+
+  function drawAmericaSpecimens() {
+    drawSpecimentsToCanvas(americaSpecimens, true);
+    drawRectFade("in");
+    d3.select("#title1").text("Sevilla americana");
+    d3.select("#title2").text(`${originTotals["americano"]} especímenes`);
+    setTimeout(() => {
+      drawRectFade("out", drawOceaniaSpecimens);
+    }, 4000);
+  }
+
+  function drawOceaniaSpecimens() {
+    drawSpecimentsToCanvas(oceaniaSpecimens, true);
+    drawRectFade("in");
+    d3.select("#title1").text("Sevilla oceanica");
+    d3.select("#title2").text(`${originTotals["oceanico"]} especímenes`);
+    setTimeout(() => {
+      drawRectFade("out", drawAfricaSpecimens);
+    }, 4000);
+  }
+
+  function drawAfricaSpecimens() {
+    drawSpecimentsToCanvas(africaSpecimens, true);
+    drawRectFade("in");
+    d3.select("#title1").text("Sevilla africana");
+    d3.select("#title2").text(`${originTotals["africano"]} especímenes`);
+    setTimeout(() => {
+      drawRectFade("out", moveBatch);
+    }, 4000);
+  }
 
   function moveBatch() {
     console.log("counter", counter);
@@ -443,69 +561,62 @@ function drawMap(error, specimensData, origins, barrios, world) {
       const dataMove = distritos[batchesNames[counter]];
       // console.log("dataMove", dataMove);
 
-      const title = batchesNames[counter];
-      // console.log("title", title);
+      // const title1 = batchesNames[counter];
+      // console.log("districtName", districtName);
+
+      // const title2 = `${districtTotals[batchesNames[counter]]} especímenes`;
+      // console.log("title2", title2);
+
+      d3.select("#title1").text(batchesNames[counter]);
+      d3.select("#title2").text(
+        `${districtTotals[batchesNames[counter]]} especímenes`
+      );
+
+      drawSpecimentsToCanvas(dataStay, false);
 
       svgContainer
-        .select("#title")
+        .selectAll(".specimenMoved")
+        .data(dataMove)
+        .enter()
+        .append("circle")
+        .attr("class", "specimenMoved")
+        .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
+        .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
+        .attr("r", 0.5)
+        .attr("fill", "#d8d8d8")
+        .transition()
+        .duration(1000)
+        .attr("fill", d => d.color)
+        .attr("r", 0.75)
+        .transition()
+        .ease(d3.easeLinear)
+        .duration(2000)
+        .delay((d, i) => i * 5)
+        .attr("cx", d => {
+          const originDestPoints = destPoints[d.origin];
+          const pointId = d.originId;
+          return worldProjection(originDestPoints[pointId])[0];
+        })
+        .attr("cy", d => {
+          const originDestPoints = destPoints[d.origin];
+          const pointId = d.originId;
+          return worldProjection(originDestPoints[pointId])[1];
+        })
+        .attr("r", 2)
         .transition()
         .duration(500)
-        .style("fill", "black")
-        .on("end", () => {
-          svgContainer.select("#title").text(title);
-
-          svgContainer
-            .select("#title")
-            .transition()
-            .duration(500)
-            .style("fill", "#6f6f6f");
-
-          drawSpecimentsToCustom(dataStay);
-
-          svgContainer
-            .selectAll(".specimenMoved")
-            .data(dataMove)
-            .enter()
-            .append("circle")
-            .attr("class", "specimenMoved")
-            .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
-            .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
-            .attr("r", 0.5)
-            .attr("fill", "#d8d8d8")
-            .transition()
-            .duration(1500)
-            .attr("fill", d => d.color)
-            .attr("r", 0.75)
-            .transition()
-            .ease(d3.easeLinear)
-            .duration(2000)
-            .delay((d, i) => i * 5)
-            .attr("cx", d => {
-              const originDestPoints = destPoints[d.origin];
-              const pointId = d.originId;
-              return worldProjection(originDestPoints[pointId])[0];
-            })
-            .attr("cy", d => {
-              const originDestPoints = destPoints[d.origin];
-              const pointId = d.originId;
-              return worldProjection(originDestPoints[pointId])[1];
-            })
-            .attr("r", 2)
-            .transition()
-            .duration(1500)
-            .attr("r", 0.75)
-            .call(endall, () => {
-              dataMove.forEach(specimen => {
-                const originDestPoints = destPoints[specimen.origin];
-                const pointId = specimen.originId;
-                specimen.long = originDestPoints[pointId][0];
-                specimen.lat = originDestPoints[pointId][1];
-                specimen.positioned = "world";
-              });
-              svgContainer.selectAll(".specimenMoved").remove();
-              drawSpecimentsToCustom(dataStay.concat(dataMove));
-              moveBatch();
-            });
+        .attr("r", 0.75)
+        .call(endall, () => {
+          dataMove.forEach(specimen => {
+            const originDestPoints = destPoints[specimen.origin];
+            const pointId = specimen.originId;
+            specimen.long = originDestPoints[pointId][0];
+            specimen.lat = originDestPoints[pointId][1];
+            specimen.positioned = "world";
+          });
+          svgContainer.selectAll(".specimenMoved").remove();
+          drawSpecimentsToCanvas(dataMove.concat(dataStay), false);
+          moveBatch();
         });
 
       counter++;
@@ -518,6 +629,25 @@ function drawMap(error, specimensData, origins, barrios, world) {
       backgroundColor: "black"
     });
   });
+}
+
+function requestFullScreen(element) {
+  // Supports most browsers and their versions.
+  var requestMethod =
+    element.requestFullScreen ||
+    element.webkitRequestFullScreen ||
+    element.mozRequestFullScreen ||
+    element.msRequestFullScreen;
+  if (requestMethod) {
+    // Native full screen.
+    requestMethod.call(element);
+  } else if (typeof window.ActiveXObject !== "undefined") {
+    // Older IE.
+    var wscript = new ActiveXObject("WScript.Shell");
+    if (wscript !== null) {
+      wscript.SendKeys("{F11}");
+    }
+  }
 }
 
 function calcDistTwoPoints(a, b) {
@@ -536,7 +666,6 @@ function endall(transition, callback) {
   if (typeof callback !== "function")
     throw new Error("Wrong callback in endall");
   if (transition.size() === 0) {
-    console.log("transition.size()", transition.size());
     callback();
   }
   var n = 0;
@@ -550,7 +679,10 @@ function endall(transition, callback) {
 }
 
 function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  // return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(d3.randomBates(3)() * (max - min + 1)) + min;
+  // const rand = d3.randomUniform(min, max);
+  // return Math.floor(rand());
 }
 
 function filterByCategory(data, category, name) {
