@@ -1,3 +1,7 @@
+// var number = 3500;
+
+// console.log(number.toLocaleString());
+
 const arrayEmpty = new Array(100);
 const array = Array.from(arrayEmpty, d => 1);
 console.log("array", array);
@@ -35,7 +39,7 @@ const destPointsJSON = JSON.stringify(destPoints);
 // const pointTransparency = "ff"; // "80"; //50%
 // const shadeTransparency = "40"; // "80"; //50%
 const title1Color = "#bfbfb1";
-const title2Color = "#7a8d2d";
+const title2Color = "#757563"; // "#7a8d2d";
 const sevillaPointsColor = "#bfbfb1";
 const originColors = {
   americano: [
@@ -154,10 +158,10 @@ svgContainer
   .append("text")
   .attr("id", "title1")
   .attr("x", width / 2)
-  .attr("y", height - 50)
+  .attr("y", height - 40)
   .attr("text-anchor", "middle")
   .style("font-family", "Lobster")
-  .style("font-size", "30px")
+  .style("font-size", "1.3em")
   .style("font-style", "italic")
   .style("fill", title1Color)
   .text("");
@@ -167,21 +171,13 @@ svgContainer
   .append("text")
   .attr("id", "title2")
   .attr("x", width / 2)
-  .attr("y", height - 30)
+  .attr("y", height - 20)
   .attr("text-anchor", "middle")
-  .style("font-family", "Lobster")
-  .style("font-size", "15px")
-  .style("font-style", "italic")
+  .style("font-family", "Roboto")
+  .style("font-size", "1em")
+  // .style("font-style", "italic")
   .style("fill", title2Color)
   .text("");
-
-// White circle
-// svgContainer
-//   .append("circle")
-//   .attr("cx", sevillaProjection(sevillaCenter)[0])
-//   .attr("cy", sevillaProjection(sevillaCenter)[1])
-//   .attr("r", 5)
-//   .style("fill", "white");
 
 const canvas = d3
   .select("#canvasContainer")
@@ -455,9 +451,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
   };
 
   function drawCanvas() {
-    context.fillStyle = "#000";
-    context.rect(0, 0, canvas.attr("width"), canvas.attr("height"));
-    context.fill();
+    cleanCanvas();
 
     var elements = customContainer.selectAll(".specimen");
     elements.each((d, i, nodes) => {
@@ -477,6 +471,12 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     });
   }
 
+  function cleanCanvas() {
+    context.fillStyle = "#000";
+    context.rect(0, 0, canvas.attr("width"), canvas.attr("height"));
+    context.fill();
+  }
+
   // //////////////////////////////////////////////////////////
   // DRAW /////////////////////////////////////////////////////
   // //////////////////////////////////////////////////////////
@@ -486,21 +486,54 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
 
   drawSpecimentsToCanvas(specimensData, true);
   drawRectFade("in");
-  d3.select("#title1").text("Sevilla");
-  d3.select("#title2").text(`${total} especímenes`);
+  d3.select("#title1").text("Sevilla cosmopolita");
+  d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
 
   setTimeout(() => {
     drawRectFade("out", drawAsiaSpecimens);
   }, 4000);
 
+  // function drawAsiaSpecimens() {
+  //   drawSpecimentsToCanvas(asiaSpecimens, true);
+  //   drawRectFade("in");
+  //   d3.select("#title1").text("Sevilla asiática");
+  //   d3.select("#title2").text(
+  //     `${originTotals["asiatico"].toLocaleString()} especímenes`
+  //   );
+  //   setTimeout(() => {
+  //     drawRectFade("out", moveToAsia);
+  //   }, 4000);
+  // }
+
   function drawAsiaSpecimens() {
-    drawSpecimentsToCanvas(asiaSpecimens, true);
-    drawRectFade("in");
+    cleanCanvas();
+    svgContainer
+      .selectAll(".asiaSpecimens")
+      .data(asiaSpecimens)
+      .enter()
+      .append("circle")
+      .attr("cx", d => sevillaProjection([+d.long, +d.lat])[0])
+      .attr("cy", d => sevillaProjection([+d.long, +d.lat])[1])
+      .attr("r", 0.5)
+      .style("fill", d => d.color)
+      .transition()
+      .duration(20000)
+      .delay(5000)
+      .attr("cx", d => {
+        const originDestPoints = destPoints[d.origin];
+        const pointId = d.originId;
+        return worldProjection(originDestPoints[pointId])[0];
+      })
+      .attr("cy", d => {
+        const originDestPoints = destPoints[d.origin];
+        const pointId = d.originId;
+        return worldProjection(originDestPoints[pointId])[1];
+      });
     d3.select("#title1").text("Sevilla asiática");
-    d3.select("#title2").text(`${originTotals["asiatico"]} especímenes`);
-    setTimeout(() => {
-      drawRectFade("out", drawEuropaSpecimens);
-    }, 4000);
+    d3.select("#title2").text(
+      `${originTotals["asiatico"].toLocaleString()} especímenes`
+    );
+    drawRectFade("in");
   }
 
   function drawEuropaSpecimens() {
@@ -508,7 +541,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     drawRectFade("in");
     d3.select("#title1").text("Sevilla europeo-mediterránea");
     d3.select("#title2").text(
-      `${originTotals["europeo-mediterraneo"]} especímenes`
+      `${originTotals["europeo-mediterraneo"].toLocaleString()} especímenes`
     );
     setTimeout(() => {
       drawRectFade("out", drawAmericaSpecimens);
@@ -519,7 +552,9 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     drawSpecimentsToCanvas(americaSpecimens, true);
     drawRectFade("in");
     d3.select("#title1").text("Sevilla americana");
-    d3.select("#title2").text(`${originTotals["americano"]} especímenes`);
+    d3.select("#title2").text(
+      `${originTotals["americano"].toLocaleString()} especímenes`
+    );
     setTimeout(() => {
       drawRectFade("out", drawOceaniaSpecimens);
     }, 4000);
@@ -528,8 +563,10 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
   function drawOceaniaSpecimens() {
     drawSpecimentsToCanvas(oceaniaSpecimens, true);
     drawRectFade("in");
-    d3.select("#title1").text("Sevilla oceanica");
-    d3.select("#title2").text(`${originTotals["oceanico"]} especímenes`);
+    d3.select("#title1").text("Sevilla oceánica");
+    d3.select("#title2").text(
+      `${originTotals["oceanico"].toLocaleString()} especímenes`
+    );
     setTimeout(() => {
       drawRectFade("out", drawAfricaSpecimens);
     }, 4000);
@@ -539,10 +576,12 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     drawSpecimentsToCanvas(africaSpecimens, true);
     drawRectFade("in");
     d3.select("#title1").text("Sevilla africana");
-    d3.select("#title2").text(`${originTotals["africano"]} especímenes`);
-    setTimeout(() => {
-      drawRectFade("out", moveBatch);
-    }, 4000);
+    d3.select("#title2").text(
+      `${originTotals["africano"].toLocaleString()} especímenes`
+    );
+    // setTimeout(() => {
+    //   drawRectFade("out", moveBatch);
+    // }, 4000);
   }
 
   function moveBatch() {
