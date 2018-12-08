@@ -5,8 +5,8 @@ d3.select("body").on("click", () => {
 
 const width = document.body.clientWidth;
 const height = Math.floor(width / 1.777777777778);
-const sevillaCenterCoord = [-5.994, 37.393];
 
+const sevillaCenterCoord = [-5.994, 37.393];
 const worldCoordinates = {
   americano: americaWorldCoordinates,
   africano: africaWorldCoordinates,
@@ -19,8 +19,8 @@ const worldCoordinates = {
 // Colors ///////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////
 const title1Color = "#bfbfb1";
-const title2Color = "#757563"; // "#7a8d2d";
-const offWhiteColor = "#d8d8d8";
+const title2Color = "#757563";
+const offWhite = "#d8d8d8";
 const originColors = {
   "europeo-mediterraneo": [
     "#0096cc",
@@ -115,6 +115,7 @@ const sevillaPath = d3.geoPath().projection(sevillaProjection);
 // Setup containers /////////////////////////////////////////
 // //////////////////////////////////////////////////////////
 
+// SVG
 const svg = d3
   .select("#svgContainer")
   .append("svg")
@@ -123,6 +124,31 @@ const svg = d3
   .attr("height", height);
 
 const svgContainer = svg.append("g");
+
+// Animation Name
+svgContainer
+  .append("text")
+  .attr("id", "animationName")
+  .attr("x", width / 2)
+  .attr("y", height / 2)
+  .attr("text-anchor", "middle")
+  .style("font-family", "Lobster")
+  .style("font-size", "3em")
+  .style("fill", title1Color)
+  .text("");
+
+// Author Name
+svgContainer
+  .append("text")
+  .attr("id", "authorName")
+  .attr("x", width / 2)
+  .attr("y", height / 2 + 50)
+  .attr("text-anchor", "middle")
+  .style("font-family", "Roboto")
+  .style("font-size", "1.3em")
+  .style("font-style", "italic")
+  .style("fill", title2Color)
+  .text("");
 
 // District Name
 svgContainer
@@ -149,6 +175,7 @@ svgContainer
   .style("fill", title2Color)
   .text("");
 
+// Canvas
 const canvas = d3
   .select("#canvasContainer")
   .append("canvas")
@@ -206,16 +233,12 @@ d3.queue()
     d.UN = +d.UN;
     return d;
   })
-  .defer(d3.json, "/data/maps/barrios-topo.json")
   .defer(d3.json, "/data/maps/world-100m-topo.json")
   .await(drawMap);
 
-function drawMap(error, specimensData, totals, origins, barrios, world) {
+function drawMap(error, specimensData, totals, origins, world) {
   if (error) throw error;
   console.log("specimensData", specimensData);
-  console.log("totals", totals);
-  // console.log("world", world);
-  // console.log("worldCoordinates", worldCoordinates);
 
   // //////////////////////////////////////////////////////////
   // Geographic DATA //////////////////////////////////////////
@@ -302,12 +325,6 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     });
   });
 
-  // console.log("africaSpecimens", africaSpecimens);
-  // console.log("americaSpecimens", americaSpecimens);
-  // console.log("asiaSpecimens", asiaSpecimens);
-  // console.log("europaSpecimens", europaSpecimens);
-  // console.log("oceaniaSpecimens", oceaniaSpecimens);
-
   // Specimens by district and zone
   const distritosNames = getUniqueCategory(specimensData, "DISTRITO");
   const batchesNames = [
@@ -351,9 +368,6 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     obj => obj["park_zona"] !== "Real Alcázar"
   );
 
-  console.log("batchesNames", batchesNames);
-  console.log("distritos", distritos);
-
   // //////////////////////////////////////////////////////////
   // Draw Functions ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
@@ -376,7 +390,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
       })
       .transition()
       .ease(d3.easeLinear)
-      .duration(1000)
+      .duration(1500)
       .attr("fill-opacity", () => {
         if (direction === "in") return 0;
         else if (direction === "out") return 1;
@@ -395,8 +409,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     // Update
     dataBinding
       .attr("fillStyle", d => {
-        if (d.positioned === "sevilla" && !sevillaIsColoured)
-          return offWhiteColor;
+        if (d.positioned === "sevilla" && !sevillaIsColoured) return offWhite;
         else return d.color;
       })
       .attr("cx", d => {
@@ -431,8 +444,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
       })
       .attr("r", 0.75)
       .attr("fillStyle", d => {
-        if (d.positioned === "sevilla" && !sevillaIsColoured)
-          return offWhiteColor;
+        if (d.positioned === "sevilla" && !sevillaIsColoured) return offWhite;
         else return d.color;
       });
 
@@ -468,10 +480,8 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     context.fill();
   }
 
-  // const durationMoveToWorld = 10000;
-  const durationMoveToWorld = 100;
-  // const delayMoveToWorld = 4000
-  const delayMoveToWorld = 0;
+  const durationMoveToWorld = 10000;
+  const delayMoveToWorld = 4000;
   function moveSpecimensToWorld(data, className, callback) {
     svgContainer
       .selectAll("." + className)
@@ -481,7 +491,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
       .attr("class", className)
       .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
       .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
-      .attr("r", 0.75)
+      .attr("r", 0.5)
       .style("fill", d => d.color)
       .transition()
       .duration(durationMoveToWorld)
@@ -492,6 +502,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
       .attr("cy", d => {
         return worldProjection([d.longWorld, d.latWorld])[1];
       })
+      .attr("r", 0.75)
       .call(endall, () => {
         data.forEach(specimen => (specimen.positioned = "world"));
         setTimeout(() => {
@@ -505,15 +516,32 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
   // //////////////////////////////////////////////////////////
   let counter = 0;
 
-  // Draw Sevilla all points in their color
-  drawSpecimentsToCanvas(specimensData, true);
-  d3.select("#title1").text("Sevilla cosmopolita");
-  d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
-  drawRectFade("in");
+  setTimeout(drawCredits, 8000);
 
-  setTimeout(() => {
-    drawRectFade("out", drawAsiaSpecimens);
-  }, 8000);
+  function drawCredits() {
+    d3.select("#animationName").text("COROTIPOS");
+    d3.select("#authorName").text("Esperanza Moreno Cruz");
+    drawRectFade("in");
+    setTimeout(() => {
+      drawRectFade("out", () => {
+        d3.select("#animationName").remove();
+        d3.select("#authorName").remove();
+      });
+      setTimeout(start, 2000);
+    }, 4000);
+  }
+
+  function start() {
+    // Draw Sevilla all points in their color
+    drawSpecimentsToCanvas(specimensData, true);
+    d3.select("#title1").text("Sevilla cosmopolita");
+    d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
+    drawRectFade("in");
+
+    setTimeout(() => {
+      drawRectFade("out", drawAsiaSpecimens);
+    }, 10000);
+  }
 
   function drawAsiaSpecimens() {
     cleanCanvas();
@@ -532,7 +560,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
       "europaSpecimens",
       drawAmericaSpecimens
     );
-    d3.select("#title1").text("Sevilla europeo-meditarránea");
+    d3.select("#title1").text("Sevilla europeo-mediterránea");
     d3.select("#title2").text(
       `${originTotals["europeo-mediterraneo"].toLocaleString()} especímenes`
     );
@@ -574,6 +602,7 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
     d3.select("#title2").text(
       `${originTotals["africano"].toLocaleString()} especímenes`
     );
+    drawRectFade("in");
   }
 
   function drawWorld() {
@@ -586,21 +615,18 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
   }
 
   function moveBatch() {
-    console.log("counter", counter);
     cleanCanvas();
 
     if (counter < batchesNames.length) {
       const dataStay = getDataStay(batchesNames, distritos, counter);
       const dataMove = distritos[batchesNames[counter]];
-      // console.log("dataStay", dataStay);
-      // console.log("dataMove", dataMove);
 
       d3.select("#title1").text(batchesNames[counter]);
       d3.select("#title2").text(
         `${districtTotals[batchesNames[counter]].toLocaleString()} especímenes`
       );
 
-      drawSpecimentsToCanvas(dataStay, false);
+      drawSpecimentsToCanvas(dataStay);
 
       svgContainer
         .selectAll(".specimenMoved")
@@ -615,14 +641,14 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
         .transition()
         .ease(d3.easeLinear)
         .duration(2000)
-        .delay((d, i) => i * 5)
+        .delay((d, i) => i * 3)
         .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
         .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
         .on("start", function() {
           d3.select(this).attr("r", 2);
         })
         .on("end", function() {
-          d3.select(this).style("fill", offWhiteColor);
+          d3.select(this).style("fill", offWhite);
         })
         .transition()
         .duration(500)
@@ -632,22 +658,26 @@ function drawMap(error, specimensData, totals, origins, barrios, world) {
             specimen.positioned = "sevilla";
           });
           svgContainer.selectAll(".specimenMoved").remove();
-          drawSpecimentsToCanvas(dataStay.concat(dataMove), false);
+          drawSpecimentsToCanvas(dataStay.concat(dataMove));
           d3.select("#title1").text("");
           d3.select("#title2").text("");
           moveBatch();
         });
 
       counter++;
+    } else {
+      drawSpecimentsToCanvas(specimensData);
+      d3.select("#title1").text("Sevilla cosmopolita");
+      d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
+      setTimeout(() => {
+        drawRectFade("out", () => {
+          d3.select("#title1").remove();
+          d3.select("#title2").remove();
+          cleanCanvas();
+        });
+      }, 4000);
     }
   }
-
-  d3.select("#downloadImage").on("click", function() {
-    saveSvgAsPng(d3.select("#chartSVG").node(), "puntos.png", {
-      scale: 2,
-      backgroundColor: "black"
-    });
-  });
 }
 
 function getDataStay(batchesNames, distritos, counter) {
@@ -709,10 +739,7 @@ function endall(transition, callback) {
 }
 
 function getRandomInt(min, max) {
-  // return Math.floor(Math.random() * (max - min + 1)) + min;
-  return Math.floor(d3.randomBates(1)() * (max - min + 1)) + min;
-  // const rand = d3.randomUniform(min, max);
-  // return Math.floor(rand());
+  return Math.floor(d3.randomBates(2)() * (max - min + 1)) + min;
 }
 
 function filterByCategory(data, category, name) {
