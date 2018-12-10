@@ -5,7 +5,7 @@
 body {
   text-align: center;
   font-family: "Lobster", "Roboto";
-  background-color: white;
+  /* background-color: white; */
   background-color: black;
 }
 
@@ -23,3 +23,9 @@ body {
 #canvasContainer {
   position: absolute;
 }
+
+/* #container img {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+} */

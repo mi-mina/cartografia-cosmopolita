@@ -14,6 +14,10 @@ const worldCoordinates = {
   oceanico: oceaniaWorldCoordinates,
   "europeo-mediterraneo": europaWorldCoordinates
 };
+// "Cototipos" Coordinates /////////////////////////////////
+const pointsToDrawTitle = 8000;
+const titleCoordShuffled = d3.shuffle(titleCoord);
+const titleCoordReduced = titleCoordShuffled.slice(0, pointsToDrawTitle);
 
 // //////////////////////////////////////////////////////////
 // Colors ///////////////////////////////////////////////////
@@ -125,29 +129,18 @@ const svg = d3
 
 const svgContainer = svg.append("g");
 
-// Animation Name
-svgContainer
-  .append("text")
-  .attr("id", "animationName")
-  .attr("x", width / 2)
-  .attr("y", height / 2)
-  .attr("text-anchor", "middle")
-  .style("font-family", "Lobster")
-  .style("font-size", "3em")
-  .style("fill", title1Color)
-  .text("");
-
 // Author Name
 svgContainer
   .append("text")
   .attr("id", "authorName")
   .attr("x", width / 2)
-  .attr("y", height / 2 + 50)
+  .attr("y", height / 2 + 60)
+  .attr("dy", "0.35em")
   .attr("text-anchor", "middle")
   .style("font-family", "Roboto")
-  .style("font-size", "1.3em")
-  .style("font-style", "italic")
-  .style("fill", title2Color)
+  .style("font-size", "1.8em")
+  // .style("font-style", "italic")
+  .style("fill", title1Color)
   .text("");
 
 // District Name
@@ -368,6 +361,23 @@ function drawMap(error, specimensData, totals, origins, world) {
     obj => obj["park_zona"] !== "Real Alcázar"
   );
 
+  // Specimens to draw the title
+  const specimensToTitle = d3
+    .shuffle(
+      specimensData.filter(specimen => {
+        return (
+          specimen["park_zona"] !== "Real Alcázar" &&
+          specimen["park_zona"] !== "María Luisa"
+        );
+      })
+    )
+    .slice(0, titleCoordReduced.length);
+
+  specimensToTitle.forEach((specimen, i) => {
+    specimen.coordXTitle = titleCoordReduced[i].x * width;
+    specimen.coordYTitle = titleCoordReduced[i].y * height;
+  });
+
   // //////////////////////////////////////////////////////////
   // Draw Functions ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
@@ -480,7 +490,9 @@ function drawMap(error, specimensData, totals, origins, world) {
     context.fill();
   }
 
+  // const durationMoveToWorld = 100;
   const durationMoveToWorld = 10000;
+  // const delayMoveToWorld = 400;
   const delayMoveToWorld = 4000;
   function moveSpecimensToWorld(data, className, callback) {
     svgContainer
@@ -494,6 +506,7 @@ function drawMap(error, specimensData, totals, origins, world) {
       .attr("r", 0.5)
       .style("fill", d => d.color)
       .transition()
+      .ease(d3.easeLinear)
       .duration(durationMoveToWorld)
       .delay(delayMoveToWorld)
       .attr("cx", d => {
@@ -516,31 +529,69 @@ function drawMap(error, specimensData, totals, origins, world) {
   // //////////////////////////////////////////////////////////
   let counter = 0;
 
-  setTimeout(drawCredits, 8000);
+  const waitTostart = 5000;
+  setTimeout(drawCredits, waitTostart);
 
   function drawCredits() {
-    d3.select("#animationName").text("COROTIPOS");
-    d3.select("#authorName").text("Esperanza Moreno Cruz");
-    drawRectFade("in");
-    setTimeout(() => {
-      drawRectFade("out", () => {
-        d3.select("#animationName").remove();
-        d3.select("#authorName").remove();
+    svgContainer
+      .selectAll(".titlePoints")
+      .data(specimensToTitle)
+      .enter()
+      .append("circle")
+      .attr("class", "titlePoints")
+      .attr("cx", d => d.coordXTitle)
+      .attr("cy", d => d.coordYTitle)
+      .attr("r", 0.6)
+      .style("fill", d => d.color)
+      .transition()
+      .duration(6000)
+      .on("start", function(d, i) {
+        if (i === 0) {
+          d3.select("#authorName")
+            .style("opacity", 0)
+            .transition()
+            .duration(1500)
+            .delay(1000)
+            .text("Esperanza Moreno Cruz")
+            .style("opacity", 1)
+            .transition()
+            .duration(1500)
+            .delay(3000)
+            .style("opacity", 0);
+        }
+      })
+      .transition()
+      .duration(1500)
+      .delay((d, i) => i * 1)
+      .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
+      .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
+      .on("start", function() {
+        d3.select(this).attr("r", 2);
+      })
+      .on("end", function() {
+        d3.select(this).attr("r", 0.5);
+      })
+      .transition()
+      .duration(500)
+      .attr("fill", d => d.color)
+      .call(endall, () => {
+        setTimeout(start, 2000);
       });
-      setTimeout(start, 2000);
-    }, 4000);
   }
 
   function start() {
+    svgContainer.selectAll(".titlePoints").remove();
     // Draw Sevilla all points in their color
     drawSpecimentsToCanvas(specimensData, true);
+    // d3.select("#animationName").text("COROTIPOS");
+    // d3.select("#authorName").text("Esperanza Moreno Cruz");
     d3.select("#title1").text("Sevilla cosmopolita");
     d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
-    drawRectFade("in");
+    // drawRectFade("in");
 
     setTimeout(() => {
       drawRectFade("out", drawAsiaSpecimens);
-    }, 10000);
+    }, 7000);
   }
 
   function drawAsiaSpecimens() {
@@ -648,7 +699,9 @@ function drawMap(error, specimensData, totals, origins, world) {
           d3.select(this).attr("r", 2);
         })
         .on("end", function() {
-          d3.select(this).style("fill", offWhite);
+          d3.select(this)
+            .attr("r", 3)
+            .style("fill", offWhite);
         })
         .transition()
         .duration(500)
@@ -670,11 +723,28 @@ function drawMap(error, specimensData, totals, origins, world) {
       d3.select("#title1").text("Sevilla cosmopolita");
       d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
       setTimeout(() => {
-        drawRectFade("out", () => {
-          d3.select("#title1").remove();
-          d3.select("#title2").remove();
-          cleanCanvas();
-        });
+        d3.select("#title1").remove();
+        d3.select("#title2").remove();
+
+        cleanCanvas();
+        // svgContainer
+        //   .selectAll(".titlePoints")
+        //   .data(specimensToTitle)
+        //   .enter()
+        //   .append("circle")
+        //   .attr("class", "titlePoints")
+        //   .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
+        //   .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
+        //   .attr("r", 0.5)
+        //   .style("fill", "white")
+        //   .transition()
+        //   .duration(4000)
+        //   .attr("cx", d => d.coordXTitle)
+        //   .attr("cy", d => d.coordYTitle)
+        //   .transition()
+        //   .duration(4000)
+        //   .delay(4000)
+        //   .attr("fill", d => d.color);
       }, 4000);
     }
   }
