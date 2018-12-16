@@ -27,64 +27,64 @@ const title2Color = "#757563";
 const offWhite = "#d8d8d8";
 const originColors = {
   "europeo-mediterraneo": [
-    "#0096cc",
-    "#82b7df",
-    "#6fd4ff",
-    "#4ca9ff",
-    "#0090f6",
+    "#0070d7",
+    "#0090ea",
+    "#00aeff",
+    "#007fff",
+    "#0065ff",
     "#049aff",
-    "#007ce4",
-    "#00afff",
-    "#0061d2",
+    "#0051ec",
+    "#0086ff",
+    "#0035d7",
     "#003aad"
   ],
   africano: [
-    "#e00000",
-    "#ff4621",
-    "#f20004",
-    "#ff0017",
-    "#ff6f2f",
-    "#ff7345",
-    "#db3b00",
-    "#ff5330",
-    "#ff9c67",
-    "#ff0000"
+    "#c40000",
+    "#e20000",
+    "#a70000",
+    "#ff0000",
+    "#ff7868",
+    "#ff3000",
+    "#fa0000",
+    "#e20000",
+    "#ff4a00",
+    "#d20000"
   ],
   asiatico: [
-    "#ef6700",
-    "#e75700",
-    "#f37a00",
-    "#d94a00",
-    "#f78f00",
-    "#c14700",
-    "#d16c00",
-    "#faa900",
-    "#ffca00",
-    "#db6100"
+    "#fd5a00",
+    "#f64600",
+    "#ff7000",
+    "#e83500",
+    "#ff8800",
+    "#cf3600",
+    "#dd6300",
+    "#ffa500",
+    "#ffc900",
+    "#e95500"
   ],
   americano: [
-    "#d152a2",
-    "#c44594",
-    "#a73576",
-    "#b63986",
-    "#ac006b",
-    "#de63af",
-    "#d70060",
-    "#e97ac1",
-    "#ff006c",
-    "#ff8eff"
+    "#e634ac",
+    "#d9209d",
+    "#ff56f9",
+    "#a80067",
+    "#c00070",
+    "#f34ab9",
+    "#ed005d",
+    "#ff66cc",
+    "#ff0068",
+    "#ff7eff"
   ],
   oceanico: [
-    "#a4ac00",
-    "#7f8900",
-    "#b4bd00",
-    "#607a00",
-    "#959241",
-    "#c5cf00",
-    "#ffff92",
-    "#476600",
-    "#d7e21c",
-    "#4a6900"
+    "#9fae00",
+    "#236500",
+    "#62d100",
+    "#487f00",
+    "#909500",
+    "#68a900",
+    "#c1ff00",
+    "#276b00",
+    "#cbe600",
+    "#5f9d00"
   ]
 };
 
@@ -138,8 +138,8 @@ svgContainer
   .attr("dy", "0.35em")
   .attr("text-anchor", "middle")
   .style("font-family", "Roboto")
+  .style("font-weight", "300")
   .style("font-size", "1.8em")
-  // .style("font-style", "italic")
   .style("fill", title1Color)
   .text("");
 
@@ -382,6 +382,51 @@ function drawMap(error, specimensData, totals, origins, world) {
   // Draw Functions ///////////////////////////////////////////
   // //////////////////////////////////////////////////////////
 
+  function drawCreditsTitle() {
+    svgContainer
+      .selectAll(".titlePoints")
+      .data(specimensToTitle)
+      .enter()
+      .append("circle")
+      .attr("class", "titlePoints")
+      .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
+      .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
+      .attr("r", 1)
+      .style("fill", "#ffffff")
+      .transition()
+      .duration(4000)
+      .delay(3000)
+      .style("fill", d => d.color)
+      .transition()
+      .duration(1500)
+      .delay((d, i) => i * 2)
+      .attr("cx", d => d.coordXTitle)
+      .attr("cy", d => d.coordYTitle)
+      .on("start", function(d, i) {
+        if (i === pointsToDrawTitle - 1) drawCreditsName();
+        d3.select(this).attr("r", 3);
+      })
+      .on("end", function() {
+        d3.select(this).attr("r", 0.7);
+      })
+      .transition()
+      .duration(6000)
+      .style("fill", "#ffffff")
+      .call(endall, () => {
+        drawRectFade("out", start);
+      });
+  }
+
+  function drawCreditsName() {
+    d3.select("#authorName")
+      .style("opacity", 0)
+      .transition()
+      .duration(1500)
+      .delay(1000)
+      .text("Esperanza Moreno Cruz")
+      .style("opacity", 1);
+  }
+
   function drawRectFade(
     direction,
     callback = () => {
@@ -452,7 +497,7 @@ function drawMap(error, specimensData, totals, origins, world) {
         else if (d.positioned === "world")
           return worldProjection([d.longWorld, d.latWorld])[1];
       })
-      .attr("r", 0.75)
+      .attr("r", 1)
       .attr("fillStyle", d => {
         if (d.positioned === "sevilla" && !sevillaIsColoured) return offWhite;
         else return d.color;
@@ -503,10 +548,10 @@ function drawMap(error, specimensData, totals, origins, world) {
       .attr("class", className)
       .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
       .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
-      .attr("r", 0.5)
+      .attr("r", 1)
       .style("fill", d => d.color)
       .transition()
-      .ease(d3.easeLinear)
+      // .ease(d3.easeLinear)
       .duration(durationMoveToWorld)
       .delay(delayMoveToWorld)
       .attr("cx", d => {
@@ -515,7 +560,6 @@ function drawMap(error, specimensData, totals, origins, world) {
       .attr("cy", d => {
         return worldProjection([d.longWorld, d.latWorld])[1];
       })
-      .attr("r", 0.75)
       .call(endall, () => {
         data.forEach(specimen => (specimen.positioned = "world"));
         setTimeout(() => {
@@ -530,65 +574,16 @@ function drawMap(error, specimensData, totals, origins, world) {
   let counter = 0;
 
   const waitTostart = 5000;
-  setTimeout(drawCredits, waitTostart);
-
-  function drawCredits() {
-    svgContainer
-      .selectAll(".titlePoints")
-      .data(specimensToTitle)
-      .enter()
-      .append("circle")
-      .attr("class", "titlePoints")
-      .attr("cx", d => d.coordXTitle)
-      .attr("cy", d => d.coordYTitle)
-      .attr("r", 0.6)
-      .style("fill", d => d.color)
-      .transition()
-      .duration(6000)
-      .on("start", function(d, i) {
-        if (i === 0) {
-          d3.select("#authorName")
-            .style("opacity", 0)
-            .transition()
-            .duration(1500)
-            .delay(1000)
-            .text("Esperanza Moreno Cruz")
-            .style("opacity", 1)
-            .transition()
-            .duration(1500)
-            .delay(3000)
-            .style("opacity", 0);
-        }
-      })
-      .transition()
-      .duration(1500)
-      .delay((d, i) => i * 1)
-      .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
-      .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
-      .on("start", function() {
-        d3.select(this).attr("r", 2);
-      })
-      .on("end", function() {
-        d3.select(this).attr("r", 0.5);
-      })
-      .transition()
-      .duration(500)
-      .attr("fill", d => d.color)
-      .call(endall, () => {
-        setTimeout(start, 2000);
-      });
-  }
+  setTimeout(drawCreditsTitle, waitTostart);
 
   function start() {
     svgContainer.selectAll(".titlePoints").remove();
+    svgContainer.selectAll("#authorName").remove();
     // Draw Sevilla all points in their color
     drawSpecimentsToCanvas(specimensData, true);
-    // d3.select("#animationName").text("COROTIPOS");
-    // d3.select("#authorName").text("Esperanza Moreno Cruz");
     d3.select("#title1").text("Sevilla cosmopolita");
     d3.select("#title2").text(`${total.toLocaleString()} especímenes`);
-    // drawRectFade("in");
-
+    drawRectFade("in");
     setTimeout(() => {
       drawRectFade("out", drawAsiaSpecimens);
     }, 7000);
@@ -687,7 +682,7 @@ function drawMap(error, specimensData, totals, origins, world) {
         .attr("class", "specimenMoved")
         .attr("cx", d => worldProjection([d.longWorld, d.latWorld])[0])
         .attr("cy", d => worldProjection([d.longWorld, d.latWorld])[1])
-        .attr("r", 0.75)
+        .attr("r", 1)
         .attr("fill", d => d.color)
         .transition()
         .ease(d3.easeLinear)
@@ -696,16 +691,16 @@ function drawMap(error, specimensData, totals, origins, world) {
         .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
         .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
         .on("start", function() {
-          d3.select(this).attr("r", 2);
+          d3.select(this).attr("r", 2.5);
         })
         .on("end", function() {
           d3.select(this)
-            .attr("r", 3)
-            .style("fill", offWhite);
+            .attr("r", 3.5)
+            .style("fill", "#ffffff");
         })
         .transition()
         .duration(500)
-        .attr("r", 0.75)
+        .attr("r", 1)
         .call(endall, () => {
           dataMove.forEach(specimen => {
             specimen.positioned = "sevilla";
@@ -727,24 +722,6 @@ function drawMap(error, specimensData, totals, origins, world) {
         d3.select("#title2").remove();
 
         cleanCanvas();
-        // svgContainer
-        //   .selectAll(".titlePoints")
-        //   .data(specimensToTitle)
-        //   .enter()
-        //   .append("circle")
-        //   .attr("class", "titlePoints")
-        //   .attr("cx", d => sevillaProjection([d.longSevilla, d.latSevilla])[0])
-        //   .attr("cy", d => sevillaProjection([d.longSevilla, d.latSevilla])[1])
-        //   .attr("r", 0.5)
-        //   .style("fill", "white")
-        //   .transition()
-        //   .duration(4000)
-        //   .attr("cx", d => d.coordXTitle)
-        //   .attr("cy", d => d.coordYTitle)
-        //   .transition()
-        //   .duration(4000)
-        //   .delay(4000)
-        //   .attr("fill", d => d.color);
       }, 4000);
     }
   }
